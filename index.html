@@ -644,15 +644,25 @@
         <div class="space-y-2">
           <label for="tree-photo" class="block text-xs font-semibold text-slate-700">Field Photo + AI Canopy Greenness Scan (Optional)</label>
           <input id="tree-photo" type="file" accept="image/*" capture="environment" class="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
-          <div id="cv-scan-card" class="hidden rounded-xl bg-slate-50 border border-emerald-200 p-3 flex items-center gap-3">
-            <img id="cv-scan-preview" src="" alt="Scanned leaf preview" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0" />
-            <div class="min-w-0 flex-1 space-y-0.5">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">ExG Vision Scan</span>
-                <span id="cv-scan-score" class="text-xs font-extrabold text-slate-900">--% Greenness</span>
+          <div id="cv-scan-card" class="hidden rounded-xl bg-slate-50 border border-emerald-200 p-3 space-y-2.5">
+            <div class="flex items-center gap-3">
+              <img id="cv-scan-preview" src="" alt="Scanned leaf preview" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0" />
+              <div class="min-w-0 flex-1 space-y-0.5">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">ExG Vision Scan</span>
+                  <span id="cv-scan-score" class="text-xs font-extrabold text-slate-900">--% Greenness</span>
+                </div>
+                <p id="cv-scan-verdict" class="text-[11px] text-slate-600 leading-snug"></p>
               </div>
-              <p id="cv-scan-verdict" class="text-[11px] text-slate-600 leading-snug"></p>
             </div>
+            <div class="pt-2 border-t border-emerald-200/70 flex flex-wrap items-center justify-between gap-2">
+              <button type="button" id="btn-ai-identify-species" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition inline-flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>AI Identify Species</span>
+              </button>
+              <span id="ai-id-status" class="text-[10px] text-slate-500">Powered by Pl@ntNet AI (Sign-in required)</span>
+            </div>
+            <div id="ai-id-results" class="hidden space-y-1.5"></div>
           </div>
         </div>
 
@@ -813,6 +823,7 @@
 
       const STORAGE_KEY_TREES = 'vanaraksha_saved_trees_v3';
       const ADMIN_EMAIL = 'renukagandhi06@gmail.com';
+      const PLANTNET_WORKER_URL = 'https://vanaraksha-plant-ai.renukagandhi06.workers.dev';
 
       // USDA Forest Service grounded annual ecological benchmarks
       const CO2_BY_STAGE = { 'Sapling': 4, 'Young': 11, 'Mature': 22 };
@@ -1710,6 +1721,125 @@
         }
       }
 
+      // ==================== AI PLANT SPECIES IDENTIFICATION (PL@NTNET VIA CLOUDFLARE WORKER) ====================
+      function prepareImageBlobForPlantNet(file) {
+        return new Promise((resolve) => {
+          if (!file) return resolve(null);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxSide = 960;
+              const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+              canvas.width = Math.max(1, Math.round(img.width * scale));
+              canvas.height = Math.max(1, Math.round(img.height * scale));
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.88);
+            };
+            img.onerror = () => resolve(null);
+            img.src = e.target.result;
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function runPlantNetIdentification() {
+        const photoInput = document.getElementById('tree-photo');
+        const file = photoInput && photoInput.files && photoInput.files[0] ? photoInput.files[0] : null;
+        const btn = document.getElementById('btn-ai-identify-species');
+        const statusEl = document.getElementById('ai-id-status');
+        const resultsEl = document.getElementById('ai-id-results');
+
+        if (!file) {
+          showToast('Please select or snap a plant photo first.', 'amber');
+          return;
+        }
+        if (state.cloudConnected && !state.currentUser) {
+          showToast('Tap "Sign In" with Google first to use AI Species Identification (protects daily quota).', 'amber');
+          return;
+        }
+
+        btn.disabled = true;
+        statusEl.textContent = 'Analyzing leaf/plant via Pl@ntNet AI...';
+        resultsEl.classList.add('hidden');
+        resultsEl.innerHTML = '';
+
+        try {
+          const blob = await prepareImageBlobForPlantNet(file);
+          if (!blob) throw new Error('Image read failed');
+
+          const fd = new FormData();
+          fd.append('images', blob, 'plant.jpg');
+
+          const res = await fetch(PLANTNET_WORKER_URL, { method: 'POST', body: fd });
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || data.message || `API status ${res.status}`);
+          }
+
+          const matches = Array.isArray(data.results) ? data.results.slice(0, 3) : [];
+          if (matches.length === 0) {
+            statusEl.textContent = 'No plant species recognized — try a closer photo of leaves or flowers.';
+            btn.disabled = false;
+            return;
+          }
+
+          const rem = typeof data.remainingIdentificationRequests === 'number'
+            ? ` · ${data.remainingIdentificationRequests} scans left today`
+            : '';
+          statusEl.textContent = `Top matches found (Powered by Pl@ntNet${rem}) — click to apply:`;
+
+          resultsEl.innerHTML = matches.map((m, idx) => {
+            const pct = Math.round((m.score || 0) * 100);
+            const sci = (m.species && m.species.scientificNameWithoutAuthor) || 'Unknown';
+            const commons = (m.species && Array.isArray(m.species.commonNames) && m.species.commonNames.length > 0)
+              ? m.species.commonNames[0]
+              : sci;
+            const fam = (m.species && m.species.family && m.species.family.scientificNameWithoutAuthor) || '';
+            return `
+              <button type="button" data-ai-pick="${idx}" class="w-full text-left px-3 py-2 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2 transition">
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-900 truncate">${escapeHtml(commons)}</div>
+                  <div class="text-[11px] italic text-emerald-700 truncate">${escapeHtml(sci)}${fam ? ` · ${escapeHtml(fam)}` : ''}</div>
+                </div>
+                <span class="shrink-0 text-[11px] font-extrabold px-2 py-0.5 rounded-full ${pct >= 50 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${pct}%</span>
+              </button>
+            `;
+          }).join('');
+          resultsEl.classList.remove('hidden');
+
+          resultsEl.querySelectorAll('[data-ai-pick]').forEach((pickBtn) => {
+            pickBtn.addEventListener('click', () => {
+              const chosen = matches[Number(pickBtn.dataset.aiPick)];
+              if (!chosen || !chosen.species) return;
+              const sci = chosen.species.scientificNameWithoutAuthor || '';
+              const common = (Array.isArray(chosen.species.commonNames) && chosen.species.commonNames[0]) || sci;
+              const sel = document.getElementById('tree-species');
+              const wrap = document.getElementById('custom-species-wrap');
+              const customCommon = document.getElementById('tree-custom-species');
+              const customBot = document.getElementById('tree-custom-botanical');
+              if (sel && wrap && customCommon && customBot) {
+                sel.value = 'CUSTOM';
+                wrap.classList.remove('hidden');
+                customCommon.required = true;
+                customCommon.value = common;
+                customBot.value = sci;
+              }
+              showToast(`Applied AI match: ${common} (${sci})!`);
+            });
+          });
+        } catch (err) {
+          statusEl.textContent = err && err.message ? err.message : 'AI scan requires your live GitHub Pages site.';
+          showToast('AI scan works on your live GitHub Pages link when signed in.', 'amber');
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
       // ==================== RENDERING: DASHBOARD ====================
       function renderDashboard() {
         const total = state.trees.length;
@@ -2352,7 +2482,12 @@
           showToast(isDark ? 'Projector Dark Mode enabled' : 'Light Mode enabled', 'slate');
         });
         document.getElementById('btn-open-live-qr').addEventListener('click', openLiveDemoQrModal);
+        document.getElementById('btn-ai-identify-species').addEventListener('click', runPlantNetIdentification);
         document.getElementById('tree-photo').addEventListener('change', async (e) => {
+          const aiRes = document.getElementById('ai-id-results');
+          const aiSt = document.getElementById('ai-id-status');
+          if (aiRes) { aiRes.classList.add('hidden'); aiRes.innerHTML = ''; }
+          if (aiSt) aiSt.textContent = 'Powered by Pl@ntNet AI (Sign-in required)';
           const f = e.target.files && e.target.files[0];
           const card = document.getElementById('cv-scan-card');
           if (!f) {
