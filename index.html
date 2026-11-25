@@ -83,6 +83,10 @@
 
       <!-- Primary CTA -->
       <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="btn-open-live-qr" class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl shadow-sm transition" title="Show Projector QR Code for Live Audience Sync">
+          <i data-lucide="qr-code" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Live QR</span>
+        </button>
         <button type="button" id="btn-open-add-modal" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl shadow-sm transition">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
           <span>Log Tree</span>
@@ -120,24 +124,26 @@
         </div>
       </div>
 
-      <!-- Live Weather & Smart Irrigation Advisory Strip (Open-Meteo Free API) -->
-      <div id="weather-banner" class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <!-- Live Weather & Air Quality Telemetry Strip (Open-Meteo Free APIs) -->
+      <div id="weather-banner" class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
             <i data-lucide="cloud-sun" class="w-5 h-5"></i>
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Live Field Weather Advisory</span>
+              <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Live Field Weather &amp; Air Quality</span>
               <span id="weather-location-label" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Bengaluru</span>
+              <span id="aqi-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">AQI --</span>
             </div>
-            <p id="weather-advisory-text" class="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5">Checking real-time temperature, humidity &amp; rainfall...</p>
+            <p id="weather-advisory-text" class="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5">Checking real-time temperature, humidity, rainfall &amp; PM2.5...</p>
           </div>
         </div>
-        <div id="weather-metrics" class="flex items-center gap-3 text-xs font-semibold text-slate-700 shrink-0">
+        <div id="weather-metrics" class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700 shrink-0">
           <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">-- °C</span>
           <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">--% RH</span>
           <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">-- mm</span>
+          <span id="pm25-pill" class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">PM2.5 --</span>
         </div>
       </div>
 
@@ -232,6 +238,46 @@
             </div>
             <p class="text-xs text-slate-500">Automatically flags trees marked Needs Water, At Risk, or unwatered for 3+ days.</p>
             <div id="care-queue-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive What-If Plantation Impact Simulator -->
+      <div class="bg-white rounded-2xl p-5 border border-emerald-200/80 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <i data-lucide="sliders-horizontal" class="w-4 h-4 text-emerald-600"></i>
+              <h3 class="text-base font-bold text-slate-900">NGO Plantation Impact Simulator</h3>
+            </div>
+            <p class="text-xs text-slate-500">Interactive planning tool: slide to forecast 10-year ecological impact if your college or NGO scales up planting.</p>
+          </div>
+          <span id="sim-tree-count-label" class="text-sm font-extrabold px-3 py-1 rounded-full bg-emerald-600 text-white self-start sm:self-auto">50 Saplings</span>
+        </div>
+        <div class="space-y-1.5">
+          <input id="sim-tree-slider" type="range" min="10" max="500" step="10" value="50" class="w-full accent-emerald-600 cursor-pointer" aria-label="Simulated tree count" />
+          <div class="flex justify-between text-[11px] font-medium text-slate-400">
+            <span>10 trees</span>
+            <span>100 trees</span>
+            <span>250 trees</span>
+            <span>500 trees</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3.5">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">10-Year CO<sub>2</sub> Captured</div>
+            <div id="sim-co2-10yr" class="text-xl font-extrabold text-slate-900 mt-1">0 kg</div>
+            <p class="text-[11px] text-slate-500">Progressive sapling-to-mature model</p>
+          </div>
+          <div class="rounded-xl bg-sky-50/70 border border-sky-100 p-3.5">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-sky-800">10-Year O<sub>2</sub> Produced</div>
+            <div id="sim-o2-10yr" class="text-xl font-extrabold text-slate-900 mt-1">0 kg</div>
+            <p class="text-[11px] text-slate-500">USDA mature benchmark scaled</p>
+          </div>
+          <div class="rounded-xl bg-teal-50/70 border border-teal-100 p-3.5">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-teal-800">Mature Annual CO<sub>2</sub></div>
+            <div id="sim-mature-annual" class="text-xl font-extrabold text-slate-900 mt-1">0 kg/yr</div>
+            <p class="text-[11px] text-slate-500">Once canopy reaches maturity</p>
           </div>
         </div>
       </div>
@@ -559,6 +605,29 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: LIVE CLASSROOM DEMO QR ==================== -->
+  <div id="modal-live-qr" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 text-center">
+      <div class="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between text-left">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">Live Audience Sync Demo</p>
+          <h3 class="text-base font-extrabold tracking-tight">Scan to Open VanaRaksha</h3>
+        </div>
+        <button type="button" data-close-modal="modal-live-qr" class="p-1.5 rounded-lg text-emerald-100 hover:bg-white/10">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div id="live-qr-container" class="mx-auto w-56 h-56 p-2.5 rounded-2xl border-2 border-emerald-200 bg-white flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"></div>
+        <div class="space-y-1">
+          <p class="text-xs font-semibold text-slate-800">Scan on any phone &amp; log a tree — watch this screen update live via Firebase!</p>
+          <p id="live-qr-url-text" class="text-[11px] font-mono text-emerald-700 break-all bg-emerald-50 px-2.5 py-1.5 rounded-lg"></p>
+        </div>
+        <button type="button" id="btn-copy-live-url" class="w-full px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">Copy Live Portal Link</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -724,7 +793,14 @@
         }
       }
 
-      // ==================== LIVE WEATHER ADVISORY (OPEN-METEO FREE API) ====================
+      // ==================== LIVE WEATHER + AIR QUALITY (OPEN-METEO FREE APIs) ====================
+      function getAqiStyle(aqi) {
+        if (aqi <= 50) return { label: `AQI ${aqi} · Good`, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+        if (aqi <= 100) return { label: `AQI ${aqi} · Moderate`, cls: 'bg-amber-50 text-amber-800 border-amber-200' };
+        if (aqi <= 150) return { label: `AQI ${aqi} · Sensitive`, cls: 'bg-orange-50 text-orange-800 border-orange-200' };
+        return { label: `AQI ${aqi} · Unhealthy`, cls: 'bg-rose-50 text-rose-700 border-rose-200' };
+      }
+
       async function fetchWeatherAdvisory(lat, lng, locLabel) {
         const key = `${Number(lat).toFixed(2)},${Number(lng).toFixed(2)}`;
         if (key === lastWeatherCoordKey) return;
@@ -733,38 +809,141 @@
         const locEl = document.getElementById('weather-location-label');
         const advEl = document.getElementById('weather-advisory-text');
         const metEl = document.getElementById('weather-metrics');
+        const aqiBadge = document.getElementById('aqi-badge');
         if (locEl) locEl.textContent = locLabel || 'Bengaluru';
 
+        let temp = null, rh = null, rain = 0, pm25 = null, usAqi = null;
+
         try {
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=auto`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error('Weather unavailable');
-          const data = await res.json();
-          const cur = data.current || {};
-          const temp = typeof cur.temperature_2m === 'number' ? cur.temperature_2m : null;
-          const rh = typeof cur.relative_humidity_2m === 'number' ? cur.relative_humidity_2m : null;
-          const rain = typeof cur.precipitation === 'number' ? cur.precipitation : 0;
+          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=auto`;
+          const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,us_aqi&timezone=auto`;
+          const [wRes, aRes] = await Promise.allSettled([fetch(weatherUrl), fetch(aqiUrl)]);
+
+          if (wRes.status === 'fulfilled' && wRes.value.ok) {
+            const wData = await wRes.value.json();
+            const cur = wData.current || {};
+            if (typeof cur.temperature_2m === 'number') temp = cur.temperature_2m;
+            if (typeof cur.relative_humidity_2m === 'number') rh = cur.relative_humidity_2m;
+            if (typeof cur.precipitation === 'number') rain = cur.precipitation;
+          }
+
+          if (aRes.status === 'fulfilled' && aRes.value.ok) {
+            const aData = await aRes.value.json();
+            const aCur = aData.current || {};
+            if (typeof aCur.pm2_5 === 'number') pm25 = aCur.pm2_5;
+            if (typeof aCur.us_aqi === 'number') usAqi = Math.round(aCur.us_aqi);
+          }
 
           if (metEl) {
             metEl.innerHTML = `
               <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">${temp !== null ? temp.toFixed(1) : '--'} °C</span>
               <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">${rh !== null ? Math.round(rh) : '--'}% RH</span>
               <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">${rain.toFixed(1)} mm</span>
+              <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200" title="Open-Meteo CAMS modeled PM2.5">PM2.5 ${pm25 !== null ? pm25.toFixed(1) + ' µg/m³' : '--'}</span>
             `;
           }
 
+          if (aqiBadge && usAqi !== null) {
+            const st = getAqiStyle(usAqi);
+            aqiBadge.className = `text-[11px] font-semibold px-2 py-0.5 rounded-full border ${st.cls}`;
+            aqiBadge.textContent = st.label;
+          }
+
           if (advEl) {
-            if (rain >= 0.5) {
-              advEl.textContent = 'Natural rainfall active — pause manual watering and check sapling drainage.';
+            if (temp === null && usAqi === null) {
+              advEl.textContent = 'Live weather & AQI feed unavailable offline — follow standard 2–3 day sapling watering cycle.';
+            } else if (rain >= 0.5) {
+              advEl.textContent = 'Natural rainfall active — pause manual watering and inspect sapling drainage.';
             } else if (temp !== null && temp >= 30 && (rh === null || rh < 55)) {
               advEl.textContent = 'Warm & dry conditions — prioritize evening watering for newly planted saplings.';
+            } else if (usAqi !== null && usAqi > 100) {
+              advEl.textContent = 'Elevated particulate pollution — expanding native canopy cover directly helps filter urban PM2.5.';
             } else {
               advEl.textContent = 'Mild field conditions — ideal for planting, mulching, and routine sapling health checks.';
             }
           }
         } catch (err) {
-          if (advEl) advEl.textContent = 'Live weather feed unavailable offline — follow standard 2–3 day sapling watering cycle.';
+          if (advEl) advEl.textContent = 'Live weather & AQI feed unavailable offline — follow standard 2–3 day sapling watering cycle.';
         }
+      }
+
+      // ==================== IMPACT SIMULATOR + LIVE DEMO QR ====================
+      function updateImpactSimulator() {
+        const slider = document.getElementById('sim-tree-slider');
+        if (!slider) return;
+        const n = Number(slider.value) || 50;
+        document.getElementById('sim-tree-count-label').textContent = `${n} Saplings`;
+
+        // Same progressive 10-year sapling-to-mature curve used in Dashboard chart
+        let co2Total10 = 0;
+        let o2Total10 = 0;
+        for (let y = 1; y <= 10; y++) {
+          let co2PerTree = 22;
+          let o2PerTree = 118;
+          if (y <= 3) {
+            co2PerTree = 4 + (y - 1) * 2;
+            o2PerTree = 20 + (y - 1) * 12;
+          } else if (y <= 7) {
+            co2PerTree = 11 + (y - 4) * 2.5;
+            o2PerTree = 60 + (y - 4) * 14;
+          }
+          co2Total10 += n * co2PerTree;
+          o2Total10 += n * o2PerTree;
+        }
+        document.getElementById('sim-co2-10yr').textContent = `${Math.round(co2Total10).toLocaleString()} kg`;
+        document.getElementById('sim-o2-10yr').textContent = `${Math.round(o2Total10).toLocaleString()} kg`;
+        document.getElementById('sim-mature-annual').textContent = `${(n * 22).toLocaleString()} kg/yr`;
+      }
+
+      function openLiveDemoQrModal() {
+        const rawHref = window.location.href.split('?')[0];
+        const liveUrl = rawHref.startsWith('http')
+          ? rawHref
+          : 'https://renukagandhi06-oss.github.io/vanaraksha/';
+        document.getElementById('live-qr-url-text').textContent = liveUrl;
+        const box = document.getElementById('live-qr-container');
+        if (typeof qrcode === 'function') {
+          try {
+            const qr = qrcode(0, 'M');
+            qr.addData(liveUrl);
+            qr.make();
+            box.innerHTML = qr.createSvgTag({ scalable: true, margin: 1 });
+          } catch (err) {
+            box.textContent = liveUrl;
+          }
+        } else {
+          box.textContent = liveUrl;
+        }
+        openModal('modal-live-qr');
+      }
+
+      function copyPortalUrl() {
+        const url = document.getElementById('live-qr-url-text').textContent || '';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(
+            () => showToast('Live portal link copied!'),
+            () => fallbackCopyUrl(url)
+          );
+        } else {
+          fallbackCopyUrl(url);
+        }
+      }
+
+      function fallbackCopyUrl(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Live portal link copied!');
+        } catch (err) {
+          showToast('Copy the URL shown above.', 'amber');
+        }
+        document.body.removeChild(ta);
       }
 
       function refreshWeatherForLatestTree() {
@@ -1670,6 +1849,9 @@
         document.getElementById('btn-saved-add-new').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-onboarding-log').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-open-add-modal').addEventListener('click', () => openModal('modal-add-tree'));
+        document.getElementById('btn-open-live-qr').addEventListener('click', openLiveDemoQrModal);
+        document.getElementById('btn-copy-live-url').addEventListener('click', copyPortalUrl);
+        document.getElementById('sim-tree-slider').addEventListener('input', updateImpactSimulator);
 
         document.querySelectorAll('[data-close-modal]').forEach((btn) => {
           btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
@@ -1865,6 +2047,7 @@
       loadLocalCache();
       bindEvents();
       renderAll();
+      updateImpactSimulator();
       initFirebaseSync();
       refreshWeatherForLatestTree();
       checkQrDeepLink();
