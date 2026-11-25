@@ -722,14 +722,42 @@
     <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-y-auto shadow-2xl border border-slate-200">
       <div class="sticky top-0 bg-emerald-700 text-white px-5 py-4 flex items-center justify-between z-10">
         <div>
-          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">Bengaluru Urban Forestry Reference</p>
-          <h3 class="text-base sm:text-lg font-extrabold tracking-tight">Native Tree Species Care Guide</h3>
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">Live GBIF Taxonomy &amp; Wikipedia Botanical API</p>
+          <h3 class="text-base sm:text-lg font-extrabold tracking-tight">Live Plant, Tree &amp; Sapling Encyclopedia</h3>
         </div>
         <button type="button" data-close-modal="modal-species-guide" class="p-1.5 rounded-lg text-emerald-100 hover:bg-white/10">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+      <div class="p-5 space-y-4">
+        <!-- Live Botanical Search Bar -->
+        <div class="rounded-xl bg-emerald-50/70 border border-emerald-200 p-3.5 space-y-2.5">
+          <label for="botanical-search-input" class="block text-xs font-bold text-emerald-950">Search Any Plant, Tree, or Sapling Worldwide (Live API)</label>
+          <div class="flex gap-2">
+            <input id="botanical-search-input" type="text" placeholder="e.g., Banyan, Mango, Teak, Jamun, Tulsi, Ficus religiosa..." class="flex-1 px-3 py-2 text-sm rounded-xl border border-emerald-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button type="button" id="btn-botanical-search" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shrink-0 inline-flex items-center gap-1">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i>
+              <span>Lookup</span>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-1.5 pt-0.5">
+            <button type="button" data-quick-plant="Azadirachta indica|Neem" class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition">Neem</button>
+            <button type="button" data-quick-plant="Ficus religiosa|Peepal" class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition">Peepal</button>
+            <button type="button" data-quick-plant="Ficus benghalensis|Banyan" class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition">Banyan</button>
+            <button type="button" data-quick-plant="Mangifera indica|Mango" class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition">Mango</button>
+            <button type="button" data-quick-plant="Syzygium cumini|Jamun" class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition">Jamun</button>
+            <button type="button" data-quick-plant="Tectona grandis|Teak" class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition">Teak</button>
+          </div>
+          <p id="botanical-status" class="text-[11px] text-emerald-800">Powered by live Global Biodiversity Information Facility (GBIF) &amp; Wikipedia REST APIs.</p>
+        </div>
+
+        <!-- Live Botanical Result Card -->
+        <div id="botanical-result-card" class="hidden rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm space-y-3"></div>
+
+        <!-- Native Bengaluru Care Quick Reference -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Bengaluru Native Urban Forestry Care Guide</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
         <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
           <div class="font-bold text-slate-900 text-sm">Neem <span class="font-normal italic text-slate-500">(Azadirachta indica)</span></div>
           <p class="text-slate-600"><strong>Best Zone:</strong> Avenues, campuses, residential parks.</p>
@@ -759,6 +787,8 @@
           <div class="font-bold text-slate-900 text-sm">Flame of the Forest <span class="font-normal italic text-slate-500">(Butea monosperma)</span></div>
           <p class="text-slate-600"><strong>Best Zone:</strong> Open sunny grounds, roadside medians.</p>
           <p class="text-slate-600"><strong>Care:</strong> Full sunlight required; drought-hardy with seasonal orange-red blooms.</p>
+        </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1557,6 +1587,129 @@
         }
       }
 
+      // ==================== LIVE BOTANICAL & TAXONOMY API (GBIF + WIKIPEDIA) ====================
+      async function lookupBotanicalSpecies(rawQuery, displayHint = '') {
+        const q = (rawQuery || '').trim();
+        const statusEl = document.getElementById('botanical-status');
+        const cardEl = document.getElementById('botanical-result-card');
+        if (!q || q.length < 2) {
+          if (statusEl) statusEl.textContent = 'Enter at least 2 characters (e.g., Neem, Banyan, Mango, Ficus religiosa).';
+          return;
+        }
+
+        if (statusEl) statusEl.textContent = `Fetching live botanical & GBIF taxonomy data for "${q}"...`;
+        if (cardEl) cardEl.classList.add('hidden');
+
+        let wikiData = null;
+        let gbifData = null;
+
+        try {
+          // 1. Resolve best Wikipedia title via OpenSearch (handles common names like "Mango", "Tulsi", "Peepal")
+          let wikiTitle = q;
+          try {
+            const osRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(q)}&limit=1&format=json&origin=*`);
+            if (osRes.ok) {
+              const osJson = await osRes.json();
+              if (Array.isArray(osJson) && Array.isArray(osJson[1]) && osJson[1][0]) {
+                wikiTitle = osJson[1][0];
+              }
+            }
+          } catch (e) {}
+
+          // 2. Fetch Wikipedia REST Summary + GBIF Taxonomy in parallel (header-free simple GETs for full CORS support)
+          const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle.replace(/ /g, '_'))}`;
+          const gbifUrl = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(q)}`;
+          const [wRes, gRes] = await Promise.allSettled([fetch(wikiUrl), fetch(gbifUrl)]);
+
+          if (wRes.status === 'fulfilled' && wRes.value.ok) {
+            const wj = await wRes.value.json();
+            if (wj && wj.extract) wikiData = wj;
+          }
+
+          if (gRes.status === 'fulfilled' && gRes.value.ok) {
+            const gj = await gRes.value.json();
+            if (gj && gj.matchType && gj.matchType !== 'NONE') gbifData = gj;
+          }
+
+          // If GBIF didn't match a common name, retry GBIF with Wikipedia's title
+          if (!gbifData && wikiData && wikiData.title && wikiData.title.toLowerCase() !== q.toLowerCase()) {
+            try {
+              const gRetry = await fetch(`https://api.gbif.org/v1/species/match?name=${encodeURIComponent(wikiData.title)}`);
+              if (gRetry.ok) {
+                const gj2 = await gRetry.json();
+                if (gj2 && gj2.matchType && gj2.matchType !== 'NONE') gbifData = gj2;
+              }
+            } catch (e) {}
+          }
+
+          if (!wikiData && !gbifData) {
+            if (statusEl) statusEl.textContent = `No live botanical record found for "${q}". Try a fuller common or scientific name.`;
+            return;
+          }
+
+          const title = displayHint || (wikiData && wikiData.title) || (gbifData && gbifData.canonicalName) || q;
+          const scientific = (gbifData && (gbifData.canonicalName || gbifData.scientificName)) || '';
+          const family = (gbifData && gbifData.family) || '';
+          const order = (gbifData && gbifData.order) || '';
+          const kingdom = (gbifData && gbifData.kingdom) || '';
+          const gbifKey = (gbifData && gbifData.usageKey) || '';
+          const thumb = (wikiData && wikiData.thumbnail && wikiData.thumbnail.source) || '';
+          const extract = (wikiData && wikiData.extract) || 'Verified taxonomic record retrieved from the Global Biodiversity Information Facility (GBIF).';
+          const wikiLink = (wikiData && wikiData.content_urls && wikiData.content_urls.desktop && wikiData.content_urls.desktop.page) || '';
+
+          if (cardEl) {
+            cardEl.innerHTML = `
+              <div class="flex flex-col sm:flex-row gap-3.5 items-start">
+                ${thumb ? `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(title)}" class="w-full sm:w-28 h-36 sm:h-28 rounded-xl object-cover border border-slate-200 shrink-0" />` : ''}
+                <div class="min-w-0 flex-1 space-y-1.5">
+                  <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <h4 class="text-base font-extrabold text-slate-900 leading-tight">${escapeHtml(title)}</h4>
+                      ${scientific ? `<p class="text-xs italic text-emerald-700 font-semibold">${escapeHtml(scientific)}</p>` : ''}
+                    </div>
+                    ${gbifKey ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">GBIF #${escapeHtml(gbifKey)}</span>` : ''}
+                  </div>
+                  ${(family || order || kingdom) ? `
+                    <div class="flex flex-wrap gap-1.5 text-[11px]">
+                      ${kingdom ? `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700"><strong>Kingdom:</strong> ${escapeHtml(kingdom)}</span>` : ''}
+                      ${family ? `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700"><strong>Family:</strong> ${escapeHtml(family)}</span>` : ''}
+                      ${order ? `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700"><strong>Order:</strong> ${escapeHtml(order)}</span>` : ''}
+                    </div>
+                  ` : ''}
+                  <p class="text-xs text-slate-600 leading-relaxed">${escapeHtml(extract)}</p>
+                  <div class="flex flex-wrap items-center gap-2 pt-1.5">
+                    <button type="button" id="btn-use-botanical-species" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">Use This Species to Log Tree</button>
+                    ${wikiLink ? `<a href="${escapeHtml(wikiLink)}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">Full Botanical Article &rarr;</a>` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+            cardEl.classList.remove('hidden');
+
+            document.getElementById('btn-use-botanical-species').addEventListener('click', () => {
+              const sel = document.getElementById('tree-species');
+              const wrap = document.getElementById('custom-species-wrap');
+              const customCommon = document.getElementById('tree-custom-species');
+              const customBot = document.getElementById('tree-custom-botanical');
+              if (sel && wrap && customCommon && customBot) {
+                sel.value = 'CUSTOM';
+                wrap.classList.remove('hidden');
+                customCommon.required = true;
+                customCommon.value = title;
+                customBot.value = scientific;
+              }
+              closeModal('modal-species-guide');
+              openModal('modal-add-tree');
+              showToast(`Loaded "${title}" into Log Tree form!`);
+            });
+          }
+
+          if (statusEl) statusEl.textContent = `Live record loaded from GBIF & Wikipedia!`;
+        } catch (err) {
+          if (statusEl) statusEl.textContent = 'Live botanical APIs unavailable offline — use the Bengaluru Native Care Guide below.';
+        }
+      }
+
       // ==================== RENDERING: DASHBOARD ====================
       function renderDashboard() {
         const total = state.trees.length;
@@ -2178,6 +2331,21 @@
         document.getElementById('btn-open-add-modal').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-auth-toggle').addEventListener('click', handleAuthToggle);
         document.getElementById('btn-open-species-guide').addEventListener('click', () => openModal('modal-species-guide'));
+        const botInput = document.getElementById('botanical-search-input');
+        document.getElementById('btn-botanical-search').addEventListener('click', () => lookupBotanicalSpecies(botInput.value));
+        botInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            lookupBotanicalSpecies(botInput.value);
+          }
+        });
+        document.querySelectorAll('[data-quick-plant]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const [sci, common] = btn.dataset.quickPlant.split('|');
+            botInput.value = common;
+            lookupBotanicalSpecies(sci, common);
+          });
+        });
         document.getElementById('btn-theme-toggle').addEventListener('click', () => {
           const isDark = document.documentElement.classList.toggle('dark-theme');
           try { localStorage.setItem('vanaraksha_theme', isDark ? 'dark' : 'light'); } catch (e) {}
