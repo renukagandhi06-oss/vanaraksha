@@ -75,6 +75,10 @@
           <i data-lucide="bookmark-check" class="w-4 h-4"></i>
           <span>Saved Records</span>
         </button>
+        <button type="button" data-nav="leaderboard" class="nav-btn px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <i data-lucide="trophy" class="w-4 h-4"></i>
+          <span>Leaderboard</span>
+        </button>
       </nav>
 
       <!-- Primary CTA -->
@@ -93,26 +97,47 @@
     <!-- ==================== VIEW 1: DASHBOARD ==================== -->
     <section id="view-dashboard" class="tab-panel active space-y-6">
       <!-- Hero Banner -->
-      <div class="rounded-2xl bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 text-white p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="rounded-2xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-700 text-white p-5 sm:p-6 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="space-y-1.5 max-w-2xl">
           <div class="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/15 px-2.5 py-1 rounded-full">
             <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
-            <span>NGO &amp; Community Live Cloud Monitoring Portal</span>
+            <span>Real-Time NGO Green Cover &amp; Ecological Telemetry</span>
           </div>
           <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Community Tree Plantation and Green Cover Monitoring Portal</h2>
           <p class="text-emerald-50/90 text-sm leading-relaxed">
-            Search any street, village, city, state, or country—or detect your live GPS—to register planted trees with real-time cloud sync across all volunteer phones and laptops.
+            Register real trees with exact landmark &amp; GPS verification, monitor live weather-guided watering alerts, project 10-year carbon impact, and track volunteer contributions live across devices.
           </p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0">
-          <button type="button" id="btn-hero-log" class="px-4 py-2 rounded-xl bg-white text-emerald-800 hover:bg-emerald-50 text-sm font-semibold transition inline-flex items-center gap-1.5 shadow-sm">
+          <button type="button" id="btn-hero-log" class="px-4 py-2 rounded-xl bg-white text-emerald-900 hover:bg-emerald-50 text-sm font-semibold transition inline-flex items-center gap-1.5 shadow-sm">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             <span>Register Tree</span>
           </button>
-          <button type="button" id="btn-hero-saved" class="px-4 py-2 rounded-xl bg-emerald-900/50 hover:bg-emerald-900/70 border border-white/20 text-white text-sm font-semibold transition inline-flex items-center gap-1.5">
+          <button type="button" id="btn-hero-saved" class="px-4 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/60 border border-white/20 text-white text-sm font-semibold transition inline-flex items-center gap-1.5">
             <i data-lucide="bookmark-check" class="w-4 h-4"></i>
             <span>Saved Records</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Live Weather & Smart Irrigation Advisory Strip (Open-Meteo Free API) -->
+      <div id="weather-banner" class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
+            <i data-lucide="cloud-sun" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold uppercase tracking-wide text-slate-500">Live Field Weather Advisory</span>
+              <span id="weather-location-label" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Bengaluru</span>
+            </div>
+            <p id="weather-advisory-text" class="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5">Checking real-time temperature, humidity &amp; rainfall...</p>
+          </div>
+        </div>
+        <div id="weather-metrics" class="flex items-center gap-3 text-xs font-semibold text-slate-700 shrink-0">
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">-- °C</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">--% RH</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">-- mm</span>
         </div>
       </div>
 
@@ -121,7 +146,7 @@
         <div class="space-y-1">
           <h3 class="text-sm sm:text-base font-bold text-emerald-950">Ready for Real Field Data — Zero Dummy Entries</h3>
           <p class="text-xs sm:text-sm text-emerald-800 leading-relaxed">
-            No sample or placeholder records are pre-loaded. Click <strong>Log Tree</strong>, search any location worldwide (or tap <strong>Use My Location</strong>), and register your first real tree.
+            No fake or placeholder data is pre-loaded. Tap <strong>Log Tree</strong>, search your area (or tap <strong>Use My Location</strong>), add any school/landmark name, and register your first tree.
           </p>
         </div>
         <button type="button" id="btn-onboarding-log" class="shrink-0 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition inline-flex items-center justify-center gap-1.5">
@@ -130,52 +155,93 @@
         </button>
       </div>
 
-      <!-- KPI Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wide">
+      <!-- 5 Ecological & Monitoring KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
             <span>Trees Logged</span>
             <i data-lucide="sprout" class="w-4 h-4 text-emerald-600"></i>
           </div>
-          <div id="kpi-total-trees" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">0</div>
-          <p id="kpi-saplings-sub" class="text-xs text-slate-500 mt-1">0 saplings tracked</p>
+          <div id="kpi-total-trees" class="text-2xl font-extrabold text-slate-900 mt-1.5">0</div>
+          <p id="kpi-saplings-sub" class="text-[11px] text-slate-500 mt-0.5">0 saplings tracked</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wide">
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
             <span>Healthy Rate</span>
             <i data-lucide="heart-pulse" class="w-4 h-4 text-emerald-600"></i>
           </div>
-          <div id="kpi-healthy-rate" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2">0%</div>
-          <p id="kpi-attention-sub" class="text-xs text-slate-500 mt-1">0 needing attention</p>
+          <div id="kpi-healthy-rate" class="text-2xl font-extrabold text-emerald-700 mt-1.5">0%</div>
+          <p id="kpi-attention-sub" class="text-[11px] text-slate-500 mt-0.5">0 needing attention</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wide">
-            <span>Est. CO<sub>2</sub> Offset</span>
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
+            <span>Est. CO<sub>2</sub> / yr</span>
             <i data-lucide="wind" class="w-4 h-4 text-teal-600"></i>
           </div>
-          <div id="kpi-co2" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">0 kg</div>
-          <p class="text-xs text-slate-500 mt-1">Per year (USDA 22 kg mature ref.)</p>
+          <div id="kpi-co2" class="text-2xl font-extrabold text-slate-900 mt-1.5">0 kg</div>
+          <p class="text-[11px] text-slate-500 mt-0.5">USDA 22 kg mature ref.</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wide">
-            <span>Locations Covered</span>
-            <i data-lucide="map-pinned" class="w-4 h-4 text-amber-600"></i>
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
+            <span>Est. O<sub>2</sub> / yr</span>
+            <i data-lucide="sparkles" class="w-4 h-4 text-sky-600"></i>
           </div>
-          <div id="kpi-zones" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">0</div>
-          <p id="kpi-countries-sub" class="text-xs text-slate-500 mt-1">0 cities / areas</p>
+          <div id="kpi-o2" class="text-2xl font-extrabold text-slate-900 mt-1.5">0 kg</div>
+          <p class="text-[11px] text-slate-500 mt-0.5">USDA 118 kg mature ref.</p>
+        </div>
+
+        <div class="col-span-2 md:col-span-1 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
+            <span>Rain Captured</span>
+            <i data-lucide="droplets" class="w-4 h-4 text-blue-600"></i>
+          </div>
+          <div id="kpi-rain" class="text-2xl font-extrabold text-slate-900 mt-1.5">0 L</div>
+          <p id="kpi-zones-sub" class="text-[11px] text-slate-500 mt-0.5">0 locations covered</p>
         </div>
       </div>
 
-      <!-- Charts Grid -->
+      <!-- Urgent Care Queue + 10-Year Carbon Forecast -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <!-- 10-Year Projected Carbon Sequestration Chart -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">10-Year Cumulative CO<sub>2</sub> Sequestration Forecast</h3>
+              <p class="text-xs text-slate-500">Projected carbon capture (kg) as your logged saplings grow into young &amp; mature canopy</p>
+            </div>
+            <span id="forecast-10yr-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 shrink-0">0 kg / 10 yrs</span>
+          </div>
+          <div class="relative h-72">
+            <canvas id="chart-forecast"></canvas>
+          </div>
+        </div>
+
+        <!-- Urgent Care Queue -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between gap-3">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="bell-ring" class="w-4 h-4 text-amber-600"></i>
+                <h3 class="text-base font-bold text-slate-900">Urgent Care Queue</h3>
+              </div>
+              <span id="care-queue-count" class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">0 Alerts</span>
+            </div>
+            <p class="text-xs text-slate-500">Automatically flags trees marked Needs Water, At Risk, or unwatered for 3+ days.</p>
+            <div id="care-queue-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Species & Location Health Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="text-base font-bold text-slate-900">Species Distribution</h3>
-              <p class="text-xs text-slate-500">Live count of logged tree species</p>
+              <p class="text-xs text-slate-500">Live breakdown of logged tree species</p>
             </div>
             <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">Live Data</span>
           </div>
@@ -198,7 +264,7 @@
         </div>
       </div>
 
-      <!-- Recent Logs & Live Sync Info -->
+      <!-- Recent Logs & Live Cloud Sync Controls -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
@@ -215,7 +281,7 @@
               <span>Live Cloud Sync (Firebase)</span>
             </div>
             <p class="text-xs text-slate-600 leading-relaxed">
-              Every tree you register syncs in real time to your free Firebase Firestore database and appears automatically across phones, laptops, and page refreshes.
+              Every tree, audit timestamp, and watering update syncs in real time to Firebase Cloud Firestore across all phones and laptops.
             </p>
           </div>
           <div class="flex flex-col gap-2">
@@ -238,7 +304,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h2 class="text-lg font-bold text-slate-900">Tree Registry &amp; Health Audits</h2>
-            <p class="text-xs text-slate-500">Filter logged trees, record watering or health updates in one tap, and inspect scannable QR Tree Passports.</p>
+            <p class="text-xs text-slate-500">Filter logged trees, record watering or health audits (logged to the tree's timeline), and open scannable QR Passports.</p>
           </div>
           <div class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full self-start md:self-auto" id="registry-count-badge">
             Showing 0 trees
@@ -249,7 +315,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div class="sm:col-span-2 relative">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input id="filter-search" type="text" placeholder="Search by ID, species, city, address, or planter..." class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="filter-search" type="text" placeholder="Search by ID, species, landmark, city, or planter..." class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
           <select id="filter-status" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
             <option value="all">All Health Statuses</option>
@@ -270,7 +336,7 @@
       <div id="registry-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </section>
 
-    <!-- ==================== VIEW 3: SAVED RECORDS (CLOUD-SYNCED LOGBOOK) ==================== -->
+    <!-- ==================== VIEW 3: SAVED RECORDS ==================== -->
     <section id="view-saved" class="tab-panel space-y-4">
       <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -281,7 +347,7 @@
               Synced Across All Devices
             </span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Every registered tree is permanently stored in Firebase Cloud Firestore and remains here across refreshes and devices.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Every registered tree and its full audit history stays permanently stored in Firebase Cloud Firestore.</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <span id="saved-total-badge" class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl">0 Saved</span>
@@ -292,14 +358,26 @@
         </div>
       </div>
 
-      <!-- Persistent Logbook Cards -->
       <div id="saved-records-container" class="space-y-3"></div>
+    </section>
+
+    <!-- ==================== VIEW 4: VOLUNTEER LEADERBOARD ==================== -->
+    <section id="view-leaderboard" class="tab-panel space-y-4">
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Live Volunteer &amp; Planter Leaderboard</h2>
+          <p class="text-xs text-slate-500">Automatically ranked from real cloud-synced tree logs by total plantations, healthy survival rate, and CO<sub>2</sub> offset.</p>
+        </div>
+        <span id="leaderboard-volunteers-badge" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full self-start sm:self-auto">0 Volunteers</span>
+      </div>
+
+      <div id="leaderboard-container" class="space-y-3"></div>
     </section>
 
   </main>
 
-  <!-- Mobile Bottom Navigation Bar -->
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 px-2 py-1.5 grid grid-cols-3 gap-1 shadow-lg" aria-label="Mobile Navigation">
+  <!-- Mobile Bottom Navigation Bar (4 Tabs) -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 px-2 py-1.5 grid grid-cols-4 gap-1 shadow-lg" aria-label="Mobile Navigation">
     <button type="button" data-nav="dashboard" class="mobile-nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-[11px] font-semibold text-emerald-700 bg-emerald-50">
       <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
       <span>Home</span>
@@ -312,25 +390,29 @@
       <i data-lucide="bookmark-check" class="w-5 h-5 mb-0.5"></i>
       <span>Saved</span>
     </button>
+    <button type="button" data-nav="leaderboard" class="mobile-nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-[11px] font-medium text-slate-500">
+      <i data-lucide="trophy" class="w-5 h-5 mb-0.5"></i>
+      <span>Leaders</span>
+    </button>
   </nav>
 
-  <!-- ==================== MODAL: LOG NEW TREE (PHOTON + NOMINATIM + LIVE GPS) ==================== -->
+  <!-- ==================== MODAL: LOG NEW TREE (LANDMARK + AREA + GPS) ==================== -->
   <div id="modal-add-tree" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
       <div class="sticky top-0 bg-white px-5 py-4 border-b border-slate-100 flex items-center justify-between z-10">
         <div>
           <h3 class="text-base font-bold text-slate-900">Register Tree Plantation</h3>
-          <p class="text-xs text-slate-500">Search any worldwide address or use live GPS, then click to select</p>
+          <p class="text-xs text-slate-500">Search any area/city or use live GPS, then optionally add an exact school or landmark</p>
         </div>
         <button type="button" data-close-modal="modal-add-tree" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
       <form id="form-add-tree" class="p-5 space-y-4">
-        <!-- Upgraded All-Locations Search Block -->
+        <!-- Location Search + Exact Landmark Block -->
         <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-2.5">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <label for="address-search-input" class="text-xs font-bold text-emerald-950">Search Any Location (Street, Area, City, State, Country)</label>
+            <label for="address-search-input" class="text-xs font-bold text-emerald-950">Step 1: Search Area / City / State / Country</label>
             <div class="flex items-center gap-2">
               <button type="button" id="btn-detect-location" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition inline-flex items-center gap-1">
                 <i data-lucide="locate-fixed" class="w-3 h-3"></i>
@@ -341,22 +423,22 @@
           </div>
 
           <div class="flex gap-2">
-            <input id="address-search-input" type="text" placeholder="Type any street, college, park, village, city, or country..." class="flex-1 px-3 py-2 text-sm rounded-xl border border-emerald-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="address-search-input" type="text" placeholder="e.g., Koramangala Bengaluru, Mysuru, Mumbai..." class="flex-1 px-3 py-2 text-sm rounded-xl border border-emerald-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             <button type="button" id="btn-search-address" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shrink-0 inline-flex items-center gap-1">
               <i data-lucide="search" class="w-3.5 h-3.5"></i>
               <span>Find</span>
             </button>
           </div>
 
-          <p id="address-search-status" class="text-[11px] text-emerald-800">Start typing any place name worldwide (e.g., Vemana Institute, Koramangala, Mysuru) and click a result to select it.</p>
+          <p id="address-search-status" class="text-[11px] text-emerald-800">Search your area/city or tap <strong>Use My Location</strong>, then add any exact school/building name below.</p>
 
           <!-- Search Results List -->
-          <div id="address-results-list" class="hidden max-h-48 overflow-y-auto space-y-1.5 pt-1"></div>
+          <div id="address-results-list" class="hidden max-h-44 overflow-y-auto space-y-1.5 pt-1"></div>
 
           <!-- Selected Address Preview Chip -->
           <div id="selected-address-box" class="hidden rounded-xl bg-white border border-emerald-300 p-2.5 flex items-start justify-between gap-2">
             <div class="min-w-0">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Selected Location ✓</div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Selected Area / GPS ✓</div>
               <div id="selected-address-text" class="text-xs font-semibold text-slate-900 leading-snug mt-0.5"></div>
               <div id="selected-address-meta" class="text-[11px] text-slate-500 mt-0.5"></div>
             </div>
@@ -365,10 +447,16 @@
 
           <!-- Manual Address Fallback Fields -->
           <div id="manual-address-fields" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            <input id="manual-area" type="text" placeholder="Street / Area / Landmark" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <input id="manual-city" type="text" placeholder="City / Town / Village" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <input id="manual-state" type="text" placeholder="State / Province" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <input id="manual-country" type="text" placeholder="Country" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="manual-area" type="text" placeholder="Street / Area (e.g., Koramangala)" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="manual-city" type="text" placeholder="City / Town (e.g., Bengaluru)" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="manual-state" type="text" placeholder="State (e.g., Karnataka)" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="manual-country" type="text" placeholder="Country (e.g., India)" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+
+          <!-- Exact Landmark / School / Building Field (solves unlisted local buildings!) -->
+          <div class="pt-1.5 border-t border-emerald-200/80">
+            <label for="tree-landmark" class="block text-[11px] font-bold text-emerald-950 mb-1">Exact Landmark / School / College / Park (Optional)</label>
+            <input id="tree-landmark" type="text" placeholder="e.g., B Mona High School, Gate 2, Main Playground" class="w-full px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-emerald-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
         </div>
 
@@ -440,12 +528,12 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: TREE PASSPORT ==================== -->
+  <!-- ==================== MODAL: TREE PASSPORT & AUDIT TIMELINE ==================== -->
   <div id="modal-passport" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
-    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl border border-slate-200">
-      <div class="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between">
+    <div class="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
+      <div class="sticky top-0 bg-emerald-700 text-white px-5 py-4 flex items-center justify-between">
         <div>
-          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">VanaRaksha Scannable Passport</p>
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">VanaRaksha QR Passport &amp; Audit Trail</p>
           <h3 id="passport-id" class="text-lg font-extrabold tracking-tight">VR-1001</h3>
         </div>
         <button type="button" data-close-modal="modal-passport" class="p-1.5 rounded-lg text-emerald-100 hover:bg-white/10">
@@ -488,7 +576,11 @@
       };
 
       const STORAGE_KEY_TREES = 'vanaraksha_saved_trees_v3';
+
+      // USDA Forest Service grounded annual ecological benchmarks
       const CO2_BY_STAGE = { 'Sapling': 4, 'Young': 11, 'Mature': 22 };
+      const O2_BY_STAGE = { 'Sapling': 20, 'Young': 60, 'Mature': 118 };
+      const RAIN_L_BY_STAGE = { 'Sapling': 800, 'Young': 2500, 'Mature': 5260 };
 
       // ==================== STATE ====================
       let state = {
@@ -503,8 +595,10 @@
       let db = null;
       let speciesChart = null;
       let zoneChart = null;
+      let forecastChart = null;
       let searchDebounceTimer = null;
       let deepLinkHandled = false;
+      let lastWeatherCoordKey = '';
 
       // ==================== CLOUD STATUS UI ====================
       function setCloudStatus(mode, label) {
@@ -548,7 +642,7 @@
         try {
           localStorage.setItem(STORAGE_KEY_TREES, JSON.stringify(state.trees));
         } catch (err) {
-          // ignore localStorage quota errors
+          // ignore
         }
       }
 
@@ -577,11 +671,11 @@
                 saveLocalCache();
                 setCloudStatus('live', 'Cloud Live');
                 renderAll();
+                refreshWeatherForLatestTree();
                 checkQrDeepLink();
               },
-              (err) => {
+              () => {
                 setCloudStatus('offline', 'Local Mode');
-                showToast('Cloud sync unavailable right now; using local storage.', 'amber');
               }
             );
         } catch (err) {
@@ -605,7 +699,7 @@
         try {
           await db.collection('trees').doc(id).update(fields);
         } catch (err) {
-          // fallback already applied locally
+          // local state already updated
         }
       }
 
@@ -614,7 +708,7 @@
         try {
           await db.collection('trees').doc(id).delete();
         } catch (err) {
-          // fallback already applied locally
+          // local state already updated
         }
       }
 
@@ -626,7 +720,59 @@
           snap.forEach((doc) => batch.delete(doc.ref));
           await batch.commit();
         } catch (err) {
-          // fallback already applied locally
+          // local state already updated
+        }
+      }
+
+      // ==================== LIVE WEATHER ADVISORY (OPEN-METEO FREE API) ====================
+      async function fetchWeatherAdvisory(lat, lng, locLabel) {
+        const key = `${Number(lat).toFixed(2)},${Number(lng).toFixed(2)}`;
+        if (key === lastWeatherCoordKey) return;
+        lastWeatherCoordKey = key;
+
+        const locEl = document.getElementById('weather-location-label');
+        const advEl = document.getElementById('weather-advisory-text');
+        const metEl = document.getElementById('weather-metrics');
+        if (locEl) locEl.textContent = locLabel || 'Bengaluru';
+
+        try {
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=auto`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('Weather unavailable');
+          const data = await res.json();
+          const cur = data.current || {};
+          const temp = typeof cur.temperature_2m === 'number' ? cur.temperature_2m : null;
+          const rh = typeof cur.relative_humidity_2m === 'number' ? cur.relative_humidity_2m : null;
+          const rain = typeof cur.precipitation === 'number' ? cur.precipitation : 0;
+
+          if (metEl) {
+            metEl.innerHTML = `
+              <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">${temp !== null ? temp.toFixed(1) : '--'} °C</span>
+              <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">${rh !== null ? Math.round(rh) : '--'}% RH</span>
+              <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">${rain.toFixed(1)} mm</span>
+            `;
+          }
+
+          if (advEl) {
+            if (rain >= 0.5) {
+              advEl.textContent = 'Natural rainfall active — pause manual watering and check sapling drainage.';
+            } else if (temp !== null && temp >= 30 && (rh === null || rh < 55)) {
+              advEl.textContent = 'Warm & dry conditions — prioritize evening watering for newly planted saplings.';
+            } else {
+              advEl.textContent = 'Mild field conditions — ideal for planting, mulching, and routine sapling health checks.';
+            }
+          }
+        } catch (err) {
+          if (advEl) advEl.textContent = 'Live weather feed unavailable offline — follow standard 2–3 day sapling watering cycle.';
+        }
+      }
+
+      function refreshWeatherForLatestTree() {
+        const withCoords = state.trees.find((t) => typeof t.lat === 'number' && typeof t.lng === 'number');
+        if (withCoords) {
+          fetchWeatherAdvisory(withCoords.lat, withCoords.lng, withCoords.city || withCoords.shortLabel);
+        } else {
+          fetchWeatherAdvisory(12.9716, 77.5946, 'Bengaluru');
         }
       }
 
@@ -635,6 +781,20 @@
         const d = new Date();
         const pad = (n) => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      }
+
+      function nowStamp() {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${todayISO()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function daysSince(isoDate) {
+        if (!isoDate) return 0;
+        const parsed = new Date(isoDate + 'T00:00:00');
+        if (Number.isNaN(parsed.getTime())) return 0;
+        const diff = Date.now() - parsed.getTime();
+        return Math.max(0, Math.floor(diff / 86400000));
       }
 
       function escapeHtml(str) {
@@ -699,14 +859,14 @@
         return out.join(', ');
       }
 
-      // ==================== UPGRADED ALL-LOCATIONS SEARCH (PHOTON + NOMINATIM + GPS) ====================
+      // ==================== LOCATION SEARCH (PHOTON + NOMINATIM + LIVE GPS) ====================
       async function searchAddresses(query) {
         const q = (query || '').trim();
         const statusEl = document.getElementById('address-search-status');
         const listEl = document.getElementById('address-results-list');
 
         if (q.length < 2) {
-          statusEl.textContent = 'Type at least 2 characters (e.g., street, area, city, state, or country) to search.';
+          statusEl.textContent = 'Type at least 2 characters (e.g., Koramangala Bengaluru, Mysuru) to search.';
           listEl.classList.add('hidden');
           listEl.innerHTML = '';
           return;
@@ -717,7 +877,6 @@
 
         let normalized = [];
 
-        // 1. Primary: Photon (fast fuzzy autocomplete for streets, colleges, villages, parks, cities worldwide)
         try {
           const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8`, {
             headers: { 'Accept': 'application/json' }
@@ -749,10 +908,9 @@
             }
           }
         } catch (err) {
-          // fall through to Nominatim
+          // fallback below
         }
 
-        // 2. Automatic Fallback: OpenStreetMap Nominatim if Photon returned nothing
         if (normalized.length === 0) {
           try {
             const nRes = await fetch(
@@ -785,7 +943,7 @@
         }
 
         if (normalized.length === 0) {
-          statusEl.textContent = 'No matching place found. Try a broader city/area name, or click "Enter manually" above.';
+          statusEl.textContent = 'Exact building not listed? Search the area/city (e.g., "Koramangala Bengaluru") or tap "Use My Location", then type the school/landmark name below.';
           listEl.classList.add('hidden');
           return;
         }
@@ -807,7 +965,7 @@
             state.selectedLocation = chosen;
             state.manualAddressMode = false;
             renderSelectedLocationUI();
-            showToast('Location selected!');
+            showToast('Area selected! You can also add a school/landmark name below.');
           });
         });
       }
@@ -815,7 +973,7 @@
       function detectCurrentLocationAddress() {
         const statusEl = document.getElementById('address-search-status');
         if (!navigator.geolocation) {
-          showToast('GPS not supported in this browser. Search or enter address manually.', 'amber');
+          showToast('GPS not supported in this browser. Search your area or enter manually.', 'amber');
           return;
         }
         statusEl.textContent = 'Detecting your live GPS location...';
@@ -860,11 +1018,11 @@
             }
             state.manualAddressMode = false;
             renderSelectedLocationUI();
-            statusEl.textContent = 'Live GPS location selected!';
-            showToast('Live location detected!');
+            statusEl.textContent = 'Live GPS location selected! Add any school/landmark name below if needed.';
+            showToast('Live GPS location detected!');
           },
           () => {
-            statusEl.textContent = 'Location permission denied or unavailable. Type any city/area above or click "Enter manually".';
+            statusEl.textContent = 'Location permission denied. Search your area/city above or click "Enter manually".';
             showToast('Allow location permission on your phone to use live GPS.', 'amber');
           },
           { timeout: 8000, enableHighAccuracy: true }
@@ -905,8 +1063,9 @@
         const attention = total - healthy;
         const healthyPct = total > 0 ? Math.round((healthy / total) * 100) : 0;
         const totalCo2 = state.trees.reduce((sum, t) => sum + (CO2_BY_STAGE[t.stage] || 4), 0);
+        const totalO2 = state.trees.reduce((sum, t) => sum + (O2_BY_STAGE[t.stage] || 20), 0);
+        const totalRain = state.trees.reduce((sum, t) => sum + (RAIN_L_BY_STAGE[t.stage] || 800), 0);
         const citiesSet = new Set(state.trees.map((t) => t.city || t.shortLabel || 'Unspecified'));
-        const countriesSet = new Set(state.trees.map((t) => t.country).filter(Boolean));
         const saplingsCount = state.trees.filter((t) => t.stage === 'Sapling').length;
 
         const banner = document.getElementById('empty-onboarding-banner');
@@ -920,14 +1079,38 @@
         document.getElementById('kpi-healthy-rate').textContent = `${healthyPct}%`;
         document.getElementById('kpi-attention-sub').textContent = `${attention} needing water or care`;
         document.getElementById('kpi-co2').textContent = `${totalCo2} kg`;
-        document.getElementById('kpi-zones').textContent = String(citiesSet.size);
-        document.getElementById('kpi-countries-sub').textContent = countriesSet.size > 0
-          ? `Across ${countriesSet.size} countr${countriesSet.size === 1 ? 'y' : 'ies'}`
-          : `${citiesSet.size} cities / areas`;
+        document.getElementById('kpi-o2').textContent = `${totalO2.toLocaleString()} kg`;
+        document.getElementById('kpi-rain').textContent = `${totalRain.toLocaleString()} L`;
+        document.getElementById('kpi-zones-sub').textContent = `${citiesSet.size} location${citiesSet.size === 1 ? '' : 's'} covered`;
 
+        // Urgent Care Queue
+        const careList = state.trees.filter((t) => t.status !== 'Healthy' || daysSince(t.lastWatered) >= 3);
+        document.getElementById('care-queue-count').textContent = `${careList.length} Alert${careList.length === 1 ? '' : 's'}`;
+        const careEl = document.getElementById('care-queue-list');
+        if (careList.length === 0) {
+          careEl.innerHTML = `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-800 font-medium text-center">${total === 0 ? 'Log trees to monitor watering & health alerts.' : 'All logged trees are healthy and recently watered!'}</div>`;
+        } else {
+          careEl.innerHTML = careList.map((t) => {
+            const dAgo = daysSince(t.lastWatered);
+            const reason = t.status !== 'Healthy' ? t.status : `Not watered for ${dAgo} days`;
+            return `
+              <div class="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-900 truncate">${escapeHtml(t.id)} &middot; ${escapeHtml(t.species)}</div>
+                  <div class="text-[11px] text-amber-800 truncate">${escapeHtml(reason)} &middot; ${escapeHtml(t.shortLabel)}</div>
+                </div>
+                <button type="button" data-action="water" data-id="${escapeHtml(t.id)}" class="shrink-0 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition">
+                  Watered
+                </button>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Recent Logs
         const recentEl = document.getElementById('dashboard-recent-list');
         if (total === 0) {
-          recentEl.innerHTML = `<p class="text-sm text-slate-500 py-6 text-center">No trees logged yet. Click <strong>Log Tree</strong> to search any location and register your first tree.</p>`;
+          recentEl.innerHTML = `<p class="text-sm text-slate-500 py-6 text-center">No trees logged yet. Click <strong>Log Tree</strong> to register your first real tree.</p>`;
         } else {
           const recent = state.trees.slice(0, 5);
           recentEl.innerHTML = recent.map((t) => `
@@ -938,10 +1121,10 @@
                   <span class="text-sm font-semibold text-slate-900 truncate">${escapeHtml(t.species)}</span>
                   <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusBadgeClass(t.status)}">${escapeHtml(t.status)}</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-0.5 truncate">${escapeHtml(t.shortLabel)} &middot; Watered ${escapeHtml(t.lastWatered)} &middot; ${escapeHtml(t.planter)}</p>
+                <p class="text-xs text-slate-500 mt-0.5 truncate">${escapeHtml(t.fullAddress)} &middot; ${escapeHtml(t.planter)}</p>
               </div>
               <button type="button" data-action="passport" data-id="${escapeHtml(t.id)}" class="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 text-xs font-semibold transition">
-                QR Passport
+                Passport
               </button>
             </div>
           `).join('');
@@ -953,6 +1136,64 @@
       function renderCharts() {
         if (typeof Chart === 'undefined') return;
 
+        // 1. 10-Year Cumulative CO2 Sequestration Curve
+        const years = Array.from({ length: 10 }, (_, i) => `Yr ${i + 1}`);
+        const cumulativeSeries = [];
+        let runningTotal = 0;
+        for (let y = 1; y <= 10; y++) {
+          let yearSum = 0;
+          state.trees.forEach((t) => {
+            if (t.stage === 'Mature') {
+              yearSum += 22;
+            } else if (t.stage === 'Young') {
+              yearSum += y >= 4 ? 22 : 11 + (y - 1) * 3.5;
+            } else {
+              // Sapling matures progressively over 10 years
+              if (y <= 3) yearSum += 4 + (y - 1) * 2;
+              else if (y <= 7) yearSum += 11 + (y - 4) * 2.5;
+              else yearSum += 22;
+            }
+          });
+          runningTotal += Math.round(yearSum);
+          cumulativeSeries.push(runningTotal);
+        }
+
+        const badge10 = document.getElementById('forecast-10yr-badge');
+        if (badge10) badge10.textContent = `${runningTotal.toLocaleString()} kg / 10 yrs`;
+
+        const ctxFc = document.getElementById('chart-forecast');
+        if (ctxFc) {
+          if (forecastChart) forecastChart.destroy();
+          forecastChart = new Chart(ctxFc, {
+            type: 'line',
+            data: {
+              labels: years,
+              datasets: [{
+                label: 'Cumulative CO2 Captured (kg)',
+                data: cumulativeSeries,
+                borderColor: '#059669',
+                backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3.5,
+                pointBackgroundColor: '#047857'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                y: { beginAtZero: true, suggestedMax: 100, ticks: { font: { size: 11 } } }
+              },
+              plugins: {
+                legend: { display: false }
+              }
+            }
+          });
+        }
+
+        // 2. Species Doughnut
         const speciesCounts = {};
         state.trees.forEach((t) => {
           speciesCounts[t.species] = (speciesCounts[t.species] || 0) + 1;
@@ -986,6 +1227,7 @@
           });
         }
 
+        // 3. Health by Location
         const locMap = {};
         state.trees.forEach((t) => {
           const key = t.city || t.shortLabel || 'Location';
@@ -1051,7 +1293,7 @@
           grid.innerHTML = `
             <div class="col-span-full bg-white rounded-2xl p-10 text-center border border-slate-200/80 space-y-3">
               <p class="text-base font-bold text-slate-800">No trees registered yet</p>
-              <p class="text-xs text-slate-500 max-w-md mx-auto">Click below to search any location or detect your GPS and register your first real tree.</p>
+              <p class="text-xs text-slate-500 max-w-md mx-auto">Click below to search any location or detect your GPS, add a school/landmark, and register your first real tree.</p>
               <button type="button" data-action="open-add" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">Log First Tree</button>
             </div>
           `;
@@ -1109,7 +1351,7 @@
                 </button>
               </div>
               <div class="flex items-center gap-1">
-                <button type="button" data-action="passport" data-id="${escapeHtml(t.id)}" class="p-1.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition" title="Open Scannable QR Passport">
+                <button type="button" data-action="passport" data-id="${escapeHtml(t.id)}" class="p-1.5 rounded-lg text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition" title="QR Passport &amp; Audit Trail">
                   <i data-lucide="qr-code" class="w-4 h-4"></i>
                 </button>
                 <button type="button" data-action="delete" data-id="${escapeHtml(t.id)}" class="p-1.5 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition" title="Delete Entry">
@@ -1125,10 +1367,9 @@
 
       // ==================== RENDERING: SAVED RECORDS ====================
       function renderSavedRecords() {
-        const badge = document.getElementById('saved-total-badge');
-        badge.textContent = `${state.trees.length} Saved`;
-
+        document.getElementById('saved-total-badge').textContent = `${state.trees.length} Saved`;
         const container = document.getElementById('saved-records-container');
+
         if (state.trees.length === 0) {
           container.innerHTML = `
             <div class="bg-white rounded-2xl p-10 text-center border border-slate-200/80 space-y-3">
@@ -1167,7 +1408,7 @@
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
               <button type="button" data-action="passport" data-id="${escapeHtml(t.id)}" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition inline-flex items-center gap-1">
                 <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
-                <span>QR Passport</span>
+                <span>QR &amp; History</span>
               </button>
               <button type="button" data-action="delete" data-id="${escapeHtml(t.id)}" class="p-1.5 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition" title="Remove Saved Record">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -1177,6 +1418,61 @@
         `).join('');
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+
+      // ==================== RENDERING: VOLUNTEER LEADERBOARD ====================
+      function renderLeaderboard() {
+        const map = {};
+        state.trees.forEach((t) => {
+          const name = (t.planter || 'Volunteer').trim();
+          const key = name.toLowerCase();
+          if (!map[key]) {
+            map[key] = { name, count: 0, healthy: 0, co2: 0, o2: 0 };
+          }
+          map[key].count++;
+          if (t.status === 'Healthy') map[key].healthy++;
+          map[key].co2 += CO2_BY_STAGE[t.stage] || 4;
+          map[key].o2 += O2_BY_STAGE[t.stage] || 20;
+        });
+
+        const ranked = Object.values(map).sort((a, b) => b.count - a.count || b.co2 - a.co2);
+        document.getElementById('leaderboard-volunteers-badge').textContent = `${ranked.length} Volunteer${ranked.length === 1 ? '' : 's'}`;
+
+        const container = document.getElementById('leaderboard-container');
+        if (ranked.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl p-10 text-center border border-slate-200/80 space-y-3">
+              <p class="text-base font-bold text-slate-800">No volunteers ranked yet</p>
+              <p class="text-xs text-slate-500 max-w-md mx-auto">As soon as volunteers log trees under their names, live rankings by trees planted, survival rate, and CO<sub>2</sub> offset will appear here.</p>
+              <button type="button" data-action="open-add" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">Log First Tree</button>
+            </div>
+          `;
+          return;
+        }
+
+        const medals = ['bg-amber-100 text-amber-800 border-amber-300', 'bg-slate-200 text-slate-700 border-slate-300', 'bg-orange-100 text-orange-800 border-orange-300'];
+        container.innerHTML = ranked.map((v, i) => {
+          const survival = v.count > 0 ? Math.round((v.healthy / v.count) * 100) : 0;
+          const badgeCls = medals[i] || 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          return `
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl border font-extrabold text-sm flex items-center justify-center shrink-0 ${badgeCls}">
+                  #${i + 1}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-base font-bold text-slate-900 truncate">${escapeHtml(v.name)}</h3>
+                  <p class="text-xs text-slate-500">${survival}% healthy survival rate across ${v.count} tree${v.count === 1 ? '' : 's'}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 sm:gap-3 text-xs font-semibold shrink-0">
+                <span class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">${v.count} Tree${v.count === 1 ? '' : 's'}</span>
+                <span class="px-3 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-200">${v.co2} kg CO<sub>2</sub>/yr</span>
+                <span class="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-800 border border-sky-200">${v.o2} kg O<sub>2</sub>/yr</span>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
 
       // ==================== NAVIGATION & MODALS ====================
@@ -1222,12 +1518,17 @@
         const t = state.trees.find((item) => item.id === treeId);
         if (!t) return;
         const co2 = CO2_BY_STAGE[t.stage] || 4;
+        const o2 = O2_BY_STAGE[t.stage] || 20;
         document.getElementById('passport-id').textContent = `${t.id} — ${t.species}`;
 
         const baseHref = window.location.href.split('?')[0];
         const qrPayload = baseHref.startsWith('http')
           ? `${baseHref}?tree=${encodeURIComponent(t.id)}`
           : `VanaRaksha | ${t.id} | ${t.species} | ${t.shortLabel}`;
+
+        const logs = Array.isArray(t.auditLog) && t.auditLog.length > 0
+          ? t.auditLog
+          : [{ time: t.plantedDate, action: `Registered as ${t.status} by ${t.planter}` }];
 
         document.getElementById('passport-body').innerHTML = `
           <div class="flex items-center gap-4">
@@ -1236,8 +1537,8 @@
               <div class="font-bold text-slate-900 text-sm">${escapeHtml(t.species)}</div>
               ${t.botanical ? `<div class="italic text-slate-500">${escapeHtml(t.botanical)}</div>` : ''}
               <span class="inline-block font-semibold px-2 py-0.5 rounded-full border ${statusBadgeClass(t.status)}">${escapeHtml(t.status)}</span>
-              <div class="text-slate-600 pt-1">Est. CO<sub>2</sub>: <strong>${co2} kg/yr</strong></div>
-              <p class="text-[10px] text-slate-400">Scannable QR code opens this tree on any phone</p>
+              <div class="text-slate-600 pt-1">CO<sub>2</sub>: <strong>${co2} kg/yr</strong> &middot; O<sub>2</sub>: <strong>${o2} kg/yr</strong></div>
+              <p class="text-[10px] text-slate-400">Scan QR on any phone to view live record</p>
             </div>
           </div>
           <div class="bg-slate-50 rounded-xl p-3 text-xs space-y-1.5 border border-slate-100">
@@ -1245,6 +1546,17 @@
             <div class="flex justify-between pt-1 border-t border-slate-200/70"><span class="text-slate-500">Planted Date</span><span class="font-medium text-slate-800">${escapeHtml(t.plantedDate)}</span></div>
             <div class="flex justify-between"><span class="text-slate-500">Last Watered</span><span class="font-medium text-slate-800">${escapeHtml(t.lastWatered)}</span></div>
             <div class="flex justify-between"><span class="text-slate-500">Logged By</span><span class="font-medium text-slate-800">${escapeHtml(t.planter)}</span></div>
+          </div>
+          <div class="space-y-1.5">
+            <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500">Verifiable Audit Timeline</h4>
+            <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+              ${logs.map((entry) => `
+                <div class="text-xs bg-emerald-50/60 border border-emerald-100 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+                  <span class="text-slate-800 font-medium">${escapeHtml(entry.action)}</span>
+                  <span class="text-[10px] text-slate-500 font-mono shrink-0">${escapeHtml(entry.time)}</span>
+                </div>
+              `).join('')}
+            </div>
           </div>
         `;
         openModal('modal-passport');
@@ -1255,6 +1567,7 @@
         renderDashboard();
         renderRegistry();
         renderSavedRecords();
+        renderLeaderboard();
         if (typeof lucide !== 'undefined') lucide.createIcons();
       }
 
@@ -1263,11 +1576,14 @@
         if (!t) return;
         const today = todayISO();
         const nextStatus = t.status === 'Needs Water' ? 'Healthy' : t.status;
+        const existingLog = Array.isArray(t.auditLog) ? t.auditLog : [];
+        const updatedLog = [{ time: nowStamp(), action: 'Watered & checked in field' }, ...existingLog];
         t.lastWatered = today;
         t.status = nextStatus;
+        t.auditLog = updatedLog;
         saveLocalCache();
         renderAll();
-        updateTreeInCloud(id, { lastWatered: today, status: nextStatus });
+        updateTreeInCloud(id, { lastWatered: today, status: nextStatus, auditLog: updatedLog });
         showToast(`${t.id} marked watered today!`);
       }
 
@@ -1277,10 +1593,13 @@
         if (!t) return;
         const idx = order.indexOf(t.status);
         const nextStatus = order[(idx + 1) % order.length];
+        const existingLog = Array.isArray(t.auditLog) ? t.auditLog : [];
+        const updatedLog = [{ time: nowStamp(), action: `Health audited → ${nextStatus}` }, ...existingLog];
         t.status = nextStatus;
+        t.auditLog = updatedLog;
         saveLocalCache();
         renderAll();
-        updateTreeInCloud(id, { status: nextStatus });
+        updateTreeInCloud(id, { status: nextStatus, auditLog: updatedLog });
         showToast(`${t.id} updated to "${nextStatus}"`, nextStatus === 'Healthy' ? 'emerald' : 'amber');
       }
 
@@ -1408,20 +1727,21 @@
         document.getElementById('form-add-tree').addEventListener('submit', async (e) => {
           e.preventDefault();
           const submitBtn = document.getElementById('btn-submit-tree');
+          const landmark = document.getElementById('tree-landmark').value.trim();
 
-          let loc = state.selectedLocation;
+          let loc = state.selectedLocation ? { ...state.selectedLocation } : null;
           if (state.manualAddressMode) {
             const area = document.getElementById('manual-area').value.trim();
             const city = document.getElementById('manual-city').value.trim();
             const stName = document.getElementById('manual-state').value.trim();
             const country = document.getElementById('manual-country').value.trim();
-            const parts = [area, city, stName, country].filter(Boolean);
+            const parts = [landmark, area, city, stName, country].filter(Boolean);
             if (parts.length === 0) {
               showToast('Please enter at least a city or address.', 'rose');
               return;
             }
             loc = {
-              fullAddress: parts.join(', '),
+              fullAddress: dedupeJoin(parts),
               city: city || area || parts[0],
               state: stName,
               country,
@@ -1430,8 +1750,10 @@
               lng: null
             };
           } else if (!loc) {
-            showToast('Please search and click a location (or tap "Use My Location" / "Enter manually").', 'amber');
+            showToast('Please search and click an area (or tap "Use My Location" / "Enter manually").', 'amber');
             return;
+          } else if (landmark) {
+            loc.fullAddress = dedupeJoin([landmark, loc.fullAddress]);
           }
 
           const spVal = document.getElementById('tree-species').value;
@@ -1479,10 +1801,10 @@
             lastWatered: todayISO(),
             notes,
             photo: photoData,
+            auditLog: [{ time: nowStamp(), action: `Registered as ${status} by ${planter}` }],
             createdAt: Date.now()
           };
 
-          // Optimistic local update + cloud write
           state.trees.unshift(newTree);
           saveLocalCache();
           renderAll();
@@ -1496,10 +1818,11 @@
           state.selectedLocation = null;
           state.manualAddressMode = false;
           document.getElementById('custom-species-wrap').classList.add('hidden');
-          document.getElementById('address-search-status').textContent = 'Start typing any place name worldwide (e.g., Vemana Institute, Koramangala, Mysuru) and click a result to select it.';
+          document.getElementById('address-search-status').textContent = 'Search your area/city or tap Use My Location, then add any exact school/building name below.';
           renderSelectedLocationUI();
           closeModal('modal-add-tree');
           showToast(synced ? `Saved ${newTree.id} live to Firebase Cloud!` : `Saved ${newTree.id} locally!`);
+          refreshWeatherForLatestTree();
         });
 
         // Registry filters
@@ -1541,6 +1864,7 @@
       bindEvents();
       renderAll();
       initFirebaseSync();
+      refreshWeatherForLatestTree();
       checkQrDeepLink();
     })();
   </script>
