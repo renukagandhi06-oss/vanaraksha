@@ -195,11 +195,11 @@
 
         <div class="col-span-2 md:col-span-1 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
           <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
-            <span>Rain Captured</span>
-            <i data-lucide="droplets" class="w-4 h-4 text-blue-600"></i>
+            <span>Locations</span>
+            <i data-lucide="map-pinned" class="w-4 h-4 text-amber-600"></i>
           </div>
-          <div id="kpi-rain" class="text-2xl font-extrabold text-slate-900 mt-1.5">0 L</div>
-          <p id="kpi-zones-sub" class="text-[11px] text-slate-500 mt-0.5">0 locations covered</p>
+          <div id="kpi-locations" class="text-2xl font-extrabold text-slate-900 mt-1.5">0</div>
+          <p id="kpi-zones-sub" class="text-[11px] text-slate-500 mt-0.5">Unique areas / cities</p>
         </div>
       </div>
 
@@ -217,6 +217,7 @@
           <div class="relative h-72">
             <canvas id="chart-forecast"></canvas>
           </div>
+          <p class="text-[11px] text-slate-400 mt-2">Model note: CO<sub>2</sub> &amp; O<sub>2</sub> figures are stage-scaled estimates based on USDA Forest Service mature-tree benchmarks (22 kg CO<sub>2</sub> &amp; 118 kg O<sub>2</sub>/yr); weather is fetched live via Open-Meteo.</p>
         </div>
 
         <!-- Urgent Care Queue -->
@@ -580,7 +581,6 @@
       // USDA Forest Service grounded annual ecological benchmarks
       const CO2_BY_STAGE = { 'Sapling': 4, 'Young': 11, 'Mature': 22 };
       const O2_BY_STAGE = { 'Sapling': 20, 'Young': 60, 'Mature': 118 };
-      const RAIN_L_BY_STAGE = { 'Sapling': 800, 'Young': 2500, 'Mature': 5260 };
 
       // ==================== STATE ====================
       let state = {
@@ -1064,8 +1064,8 @@
         const healthyPct = total > 0 ? Math.round((healthy / total) * 100) : 0;
         const totalCo2 = state.trees.reduce((sum, t) => sum + (CO2_BY_STAGE[t.stage] || 4), 0);
         const totalO2 = state.trees.reduce((sum, t) => sum + (O2_BY_STAGE[t.stage] || 20), 0);
-        const totalRain = state.trees.reduce((sum, t) => sum + (RAIN_L_BY_STAGE[t.stage] || 800), 0);
         const citiesSet = new Set(state.trees.map((t) => t.city || t.shortLabel || 'Unspecified'));
+        const countriesSet = new Set(state.trees.map((t) => t.country).filter(Boolean));
         const saplingsCount = state.trees.filter((t) => t.stage === 'Sapling').length;
 
         const banner = document.getElementById('empty-onboarding-banner');
@@ -1075,13 +1075,15 @@
         }
 
         document.getElementById('kpi-total-trees').textContent = String(total);
-        document.getElementById('kpi-saplings-sub').textContent = `${saplingsCount} saplings tracked`;
+        document.getElementById('kpi-saplings-sub').textContent = `${saplingsCount} sapling${saplingsCount === 1 ? '' : 's'} tracked`;
         document.getElementById('kpi-healthy-rate').textContent = `${healthyPct}%`;
         document.getElementById('kpi-attention-sub').textContent = `${attention} needing water or care`;
         document.getElementById('kpi-co2').textContent = `${totalCo2} kg`;
         document.getElementById('kpi-o2').textContent = `${totalO2.toLocaleString()} kg`;
-        document.getElementById('kpi-rain').textContent = `${totalRain.toLocaleString()} L`;
-        document.getElementById('kpi-zones-sub').textContent = `${citiesSet.size} location${citiesSet.size === 1 ? '' : 's'} covered`;
+        document.getElementById('kpi-locations').textContent = String(citiesSet.size);
+        document.getElementById('kpi-zones-sub').textContent = countriesSet.size > 0
+          ? `Across ${countriesSet.size} countr${countriesSet.size === 1 ? 'y' : 'ies'}`
+          : 'Unique areas / cities';
 
         // Urgent Care Queue
         const careList = state.trees.filter((t) => t.status !== 'Healthy' || daysSince(t.lastWatered) >= 3);
