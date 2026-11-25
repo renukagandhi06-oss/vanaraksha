@@ -38,6 +38,60 @@
       background: #cbd5e1;
       border-radius: 9999px;
     }
+    /* Projector Dark Mode */
+    html.dark-theme body {
+      background-color: #0b1220;
+      color: #f1f5f9;
+    }
+    html.dark-theme header,
+    html.dark-theme nav.md\:hidden {
+      background-color: rgba(15, 23, 42, 0.96) !important;
+      border-color: #1e293b !important;
+    }
+    html.dark-theme .bg-white {
+      background-color: #131f33 !important;
+    }
+    html.dark-theme .bg-slate-50,
+    html.dark-theme .bg-slate-50\/70,
+    html.dark-theme .bg-slate-100,
+    html.dark-theme .bg-slate-100\/90 {
+      background-color: #1e293b !important;
+    }
+    html.dark-theme .border-slate-200,
+    html.dark-theme .border-slate-200\/80,
+    html.dark-theme .border-slate-100,
+    html.dark-theme .border-emerald-100 {
+      border-color: #293850 !important;
+    }
+    html.dark-theme .text-slate-900,
+    html.dark-theme .text-slate-800 {
+      color: #f8fafc !important;
+    }
+    html.dark-theme .text-slate-700,
+    html.dark-theme .text-slate-600 {
+      color: #cbd5e1 !important;
+    }
+    html.dark-theme .text-slate-500,
+    html.dark-theme .text-slate-400 {
+      color: #94a3b8 !important;
+    }
+    html.dark-theme input,
+    html.dark-theme select {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark-theme .bg-emerald-50,
+    html.dark-theme .bg-emerald-50\/70,
+    html.dark-theme .bg-emerald-50\/60 {
+      background-color: rgba(6, 78, 59, 0.35) !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+    }
+    html.dark-theme .text-emerald-950,
+    html.dark-theme .text-emerald-900,
+    html.dark-theme .text-emerald-800 {
+      color: #a7f3d0 !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-20 md:pb-8">
@@ -84,6 +138,12 @@
 
       <!-- Primary CTA -->
       <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button type="button" id="btn-open-species-guide" class="inline-flex items-center justify-center bg-white hover:bg-emerald-50 border border-slate-200 text-emerald-700 p-2 rounded-xl shadow-sm transition" title="Native Bengaluru Species Care Guide" aria-label="Native Species Care Guide">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+        </button>
+        <button type="button" id="btn-theme-toggle" class="inline-flex items-center justify-center bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 p-2 rounded-xl shadow-sm transition" title="Toggle Projector Dark / Light Mode" aria-label="Toggle Dark Mode">
+          <i data-lucide="moon" class="w-4 h-4"></i>
+        </button>
         <button type="button" id="btn-auth-toggle" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl shadow-sm transition" title="Sign in with Google for Volunteer/Admin Verification">
           <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
           <span id="auth-btn-label" class="hidden sm:inline">Sign In</span>
@@ -653,6 +713,53 @@
           <p id="live-qr-url-text" class="text-[11px] font-mono text-emerald-700 break-all bg-emerald-50 px-2.5 py-1.5 rounded-lg"></p>
         </div>
         <button type="button" id="btn-copy-live-url" class="w-full px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">Copy Live Portal Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: NATIVE SPECIES CARE GUIDE ==================== -->
+  <div id="modal-species-guide" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-y-auto shadow-2xl border border-slate-200">
+      <div class="sticky top-0 bg-emerald-700 text-white px-5 py-4 flex items-center justify-between z-10">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">Bengaluru Urban Forestry Reference</p>
+          <h3 class="text-base sm:text-lg font-extrabold tracking-tight">Native Tree Species Care Guide</h3>
+        </div>
+        <button type="button" data-close-modal="modal-species-guide" class="p-1.5 rounded-lg text-emerald-100 hover:bg-white/10">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
+          <div class="font-bold text-slate-900 text-sm">Neem <span class="font-normal italic text-slate-500">(Azadirachta indica)</span></div>
+          <p class="text-slate-600"><strong>Best Zone:</strong> Avenues, campuses, residential parks.</p>
+          <p class="text-slate-600"><strong>Care:</strong> Fast-growing and drought-tolerant; water saplings every 2–3 days in dry months.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
+          <div class="font-bold text-slate-900 text-sm">Peepal <span class="font-normal italic text-slate-500">(Ficus religiosa)</span></div>
+          <p class="text-slate-600"><strong>Best Zone:</strong> Open parks, temple grounds, wide green belts.</p>
+          <p class="text-slate-600"><strong>Care:</strong> Needs space for wide roots; supports urban birdlife and dense shade canopy.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
+          <div class="font-bold text-slate-900 text-sm">Honge / Pongamia <span class="font-normal italic text-slate-500">(Millettia pinnata)</span></div>
+          <p class="text-slate-600"><strong>Best Zone:</strong> Roadsides, avenues, semi-dry urban soil.</p>
+          <p class="text-slate-600"><strong>Care:</strong> Hardy native nitrogen-fixer; low watering once established past year 1.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
+          <div class="font-bold text-slate-900 text-sm">Arjuna <span class="font-normal italic text-slate-500">(Terminalia arjuna)</span></div>
+          <p class="text-slate-600"><strong>Best Zone:</strong> Lake bunds, wetlands, moist park edges.</p>
+          <p class="text-slate-600"><strong>Care:</strong> Thrives near water bodies; stabilizes soil embankments and prevents erosion.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
+          <div class="font-bold text-slate-900 text-sm">Indian Tulip <span class="font-normal italic text-slate-500">(Thespesia populnea)</span></div>
+          <p class="text-slate-600"><strong>Best Zone:</strong> Urban parks, walkways, compact green corridors.</p>
+          <p class="text-slate-600"><strong>Care:</strong> Tolerates urban heat well; regular mulching improves sapling moisture retention.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/70 space-y-1">
+          <div class="font-bold text-slate-900 text-sm">Flame of the Forest <span class="font-normal italic text-slate-500">(Butea monosperma)</span></div>
+          <p class="text-slate-600"><strong>Best Zone:</strong> Open sunny grounds, roadside medians.</p>
+          <p class="text-slate-600"><strong>Care:</strong> Full sunlight required; drought-hardy with seasonal orange-red blooms.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -2070,6 +2177,12 @@
         document.getElementById('btn-onboarding-log').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-open-add-modal').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-auth-toggle').addEventListener('click', handleAuthToggle);
+        document.getElementById('btn-open-species-guide').addEventListener('click', () => openModal('modal-species-guide'));
+        document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark-theme');
+          try { localStorage.setItem('vanaraksha_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+          showToast(isDark ? 'Projector Dark Mode enabled' : 'Light Mode enabled', 'slate');
+        });
         document.getElementById('btn-open-live-qr').addEventListener('click', openLiveDemoQrModal);
         document.getElementById('tree-photo').addEventListener('change', async (e) => {
           const f = e.target.files && e.target.files[0];
@@ -2289,6 +2402,11 @@
       }
 
       // ==================== INIT ====================
+      try {
+        if (localStorage.getItem('vanaraksha_theme') === 'dark') {
+          document.documentElement.classList.add('dark-theme');
+        }
+      } catch (e) {}
       loadLocalCache();
       bindEvents();
       renderAll();
