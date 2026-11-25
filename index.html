@@ -11,6 +11,7 @@
   <!-- Firebase Compat SDK (100% Free Spark Plan Firestore Sync) -->
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <style>
     body {
       font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -82,7 +83,11 @@
       </nav>
 
       <!-- Primary CTA -->
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button type="button" id="btn-auth-toggle" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl shadow-sm transition" title="Sign in with Google for Volunteer/Admin Verification">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+          <span id="auth-btn-label" class="hidden sm:inline">Sign In</span>
+        </button>
         <button type="button" id="btn-open-live-qr" class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl shadow-sm transition" title="Show Projector QR Code for Live Audience Sync">
           <i data-lucide="qr-code" class="w-4 h-4"></i>
           <span class="hidden sm:inline">Live QR</span>
@@ -144,6 +149,20 @@
           <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">--% RH</span>
           <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">-- mm</span>
           <span id="pm25-pill" class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">PM2.5 --</span>
+        </div>
+      </div>
+
+      <!-- 7-Day Smart Watering Forecast Strip (Open-Meteo Daily API) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar-days" class="w-4 h-4 text-emerald-600"></i>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">7-Day Predictive Watering Planner</h3>
+          </div>
+          <span class="text-[11px] font-medium text-slate-500">Live Open-Meteo 7-day rain &amp; heat forecast</span>
+        </div>
+        <div id="watering-7day-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <div class="col-span-full text-xs text-slate-400 py-2">Loading 7-day irrigation schedule...</div>
         </div>
       </div>
 
@@ -562,9 +581,19 @@
           <input id="tree-notes" type="text" placeholder="e.g., Tree guard installed, watered 5L" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
 
-        <div>
-          <label for="tree-photo" class="block text-xs font-semibold text-slate-700 mb-1">Field Photo (Optional, synced with record)</label>
+        <div class="space-y-2">
+          <label for="tree-photo" class="block text-xs font-semibold text-slate-700">Field Photo + AI Canopy Greenness Scan (Optional)</label>
           <input id="tree-photo" type="file" accept="image/*" capture="environment" class="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+          <div id="cv-scan-card" class="hidden rounded-xl bg-slate-50 border border-emerald-200 p-3 flex items-center gap-3">
+            <img id="cv-scan-preview" src="" alt="Scanned leaf preview" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0" />
+            <div class="min-w-0 flex-1 space-y-0.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">ExG Vision Scan</span>
+                <span id="cv-scan-score" class="text-xs font-extrabold text-slate-900">--% Greenness</span>
+              </div>
+              <p id="cv-scan-verdict" class="text-[11px] text-slate-600 leading-snug"></p>
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -646,6 +675,7 @@
       };
 
       const STORAGE_KEY_TREES = 'vanaraksha_saved_trees_v3';
+      const ADMIN_EMAIL = 'renukagandhi06@gmail.com';
 
       // USDA Forest Service grounded annual ecological benchmarks
       const CO2_BY_STAGE = { 'Sapling': 4, 'Young': 11, 'Mature': 22 };
@@ -658,10 +688,14 @@
         selectedLocation: null,
         manualAddressMode: false,
         cloudConnected: false,
+        currentUser: null,
+        isAdmin: false,
+        lastScanGreenness: null,
         pendingConfirmAction: null
       };
 
       let db = null;
+      let auth = null;
       let speciesChart = null;
       let zoneChart = null;
       let forecastChart = null;
@@ -725,6 +759,14 @@
             firebase.initializeApp(firebaseConfig);
           }
           db = firebase.firestore();
+          if (typeof firebase.auth === 'function') {
+            auth = firebase.auth();
+            auth.onAuthStateChanged((user) => {
+              state.currentUser = user || null;
+              state.isAdmin = Boolean(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+              renderAuthUI();
+            });
+          }
 
           db.collection('trees')
             .orderBy('createdAt', 'desc')
@@ -793,6 +835,132 @@
         }
       }
 
+      // ==================== FIREBASE GOOGLE AUTH + ADMIN GUARD ====================
+      function renderAuthUI() {
+        const btn = document.getElementById('btn-auth-toggle');
+        const lbl = document.getElementById('auth-btn-label');
+        const planterInput = document.getElementById('tree-planter');
+        if (!btn || !lbl) return;
+
+        if (state.currentUser) {
+          const firstName = (state.currentUser.displayName || state.currentUser.email || 'User').split(' ')[0];
+          lbl.textContent = state.isAdmin ? `${firstName} (Admin)` : firstName;
+          btn.className = state.isAdmin
+            ? 'inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl shadow-sm transition'
+            : 'inline-flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl shadow-sm transition';
+          btn.title = `Signed in as ${state.currentUser.email} — Click to sign out`;
+          if (planterInput && !planterInput.value.trim()) {
+            planterInput.value = state.currentUser.displayName || state.currentUser.email;
+          }
+        } else {
+          lbl.textContent = 'Sign In';
+          btn.className = 'inline-flex items-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl shadow-sm transition';
+          btn.title = 'Sign in with Google for Volunteer/Admin Verification';
+        }
+      }
+
+      async function handleAuthToggle() {
+        if (!auth || typeof firebase === 'undefined' || !firebase.auth) {
+          showToast('Google Sign-In activates once hosted on GitHub Pages.', 'amber');
+          return;
+        }
+        if (state.currentUser) {
+          openConfirm(
+            'Sign Out',
+            `Sign out from ${state.currentUser.email}?`,
+            async () => {
+              try {
+                await auth.signOut();
+                showToast('Signed out.', 'slate');
+              } catch (err) {
+                showToast('Could not sign out right now.', 'amber');
+              }
+            }
+          );
+          return;
+        }
+        try {
+          const provider = new firebase.auth.GoogleAuthProvider();
+          await auth.signInWithPopup(provider);
+          showToast('Signed in with Google!');
+        } catch (err) {
+          if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')) {
+            try {
+              const provider = new firebase.auth.GoogleAuthProvider();
+              await auth.signInWithRedirect(provider);
+            } catch (e2) {
+              showToast('Enable Google Sign-In in Firebase Console → Authentication first.', 'amber');
+            }
+          } else {
+            showToast('Enable Google Sign-In & authorize your GitHub domain in Firebase Console.', 'amber');
+          }
+        }
+      }
+
+      // ==================== CLIENT-SIDE EXG LEAF HEALTH COMPUTER VISION ====================
+      function analyzeLeafImageFile(file) {
+        return new Promise((resolve) => {
+          if (!file) return resolve(null);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const sampleW = 120;
+              const scale = Math.min(1, sampleW / img.width);
+              canvas.width = Math.max(1, Math.round(img.width * scale));
+              canvas.height = Math.max(1, Math.round(img.height * scale));
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+              let greenPx = 0;
+              let stressPx = 0;
+              let validPx = 0;
+
+              for (let i = 0; i < data.length; i += 4) {
+                const r = data[i] / 255;
+                const g = data[i + 1] / 255;
+                const b = data[i + 2] / 255;
+                const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                // Skip pure blown-out sky/white or pitch black shadows
+                if (lum < 0.08 || lum > 0.94) continue;
+                validPx++;
+                // Excess Green Vegetation Index: ExG = 2G - R - B
+                const exg = 2 * g - r - b;
+                if (exg > 0.08 && g > r && g > b) {
+                  greenPx++;
+                } else if (r > g && g > b && (r - b) > 0.12) {
+                  stressPx++;
+                }
+              }
+
+              const denom = Math.max(1, validPx);
+              const vegDenom = Math.max(1, greenPx + stressPx);
+              const greenShare = Math.round((greenPx / denom) * 100);
+              const chlorophyllRatio = Math.round((greenPx / vegDenom) * 100);
+              const score = Math.min(100, Math.round(greenShare * 0.45 + chlorophyllRatio * 0.55));
+
+              let suggestedStatus = 'Healthy';
+              let verdict = `Strong chlorophyll signature (ExG index). Auto-selected Healthy.`;
+              if (greenShare < 8 || score < 35) {
+                suggestedStatus = 'At Risk';
+                verdict = `Very low green canopy detected (${greenShare}% green pixels) — possible wilting/dryness. Suggested: At Risk.`;
+              } else if (score < 60) {
+                suggestedStatus = 'Needs Water';
+                verdict = `Moderate greenness with dry/yellow tones — possible moisture stress. Suggested: Needs Water.`;
+              }
+
+              resolve({ score, greenShare, suggestedStatus, verdict, previewUrl: e.target.result });
+            };
+            img.onerror = () => resolve(null);
+            img.src = e.target.result;
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        });
+      }
+
       // ==================== LIVE WEATHER + AIR QUALITY (OPEN-METEO FREE APIs) ====================
       function getAqiStyle(aqi) {
         if (aqi <= 50) return { label: `AQI ${aqi} · Good`, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
@@ -815,7 +983,7 @@
         let temp = null, rh = null, rain = 0, pm25 = null, usAqi = null;
 
         try {
-          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=auto`;
+          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&daily=temperature_2m_max,precipitation_sum,precipitation_probability_max&forecast_days=7&timezone=auto`;
           const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,us_aqi&timezone=auto`;
           const [wRes, aRes] = await Promise.allSettled([fetch(weatherUrl), fetch(aqiUrl)]);
 
@@ -825,6 +993,9 @@
             if (typeof cur.temperature_2m === 'number') temp = cur.temperature_2m;
             if (typeof cur.relative_humidity_2m === 'number') rh = cur.relative_humidity_2m;
             if (typeof cur.precipitation === 'number') rain = cur.precipitation;
+            if (wData.daily && Array.isArray(wData.daily.time)) {
+              render7DayWateringPlanner(wData.daily);
+            }
           }
 
           if (aRes.status === 'fulfilled' && aRes.value.ok) {
@@ -864,7 +1035,48 @@
           }
         } catch (err) {
           if (advEl) advEl.textContent = 'Live weather & AQI feed unavailable offline — follow standard 2–3 day sapling watering cycle.';
+          const grid7 = document.getElementById('watering-7day-grid');
+          if (grid7) grid7.innerHTML = '<div class="col-span-full text-xs text-slate-400">7-day forecast unavailable offline.</div>';
         }
+      }
+
+      function render7DayWateringPlanner(daily) {
+        const grid = document.getElementById('watering-7day-grid');
+        if (!grid) return;
+        const times = daily.time || [];
+        const maxTemps = daily.temperature_2m_max || [];
+        const rainSums = daily.precipitation_sum || [];
+        const rainProbs = daily.precipitation_probability_max || [];
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        grid.innerHTML = times.slice(0, 7).map((iso, idx) => {
+          const dt = new Date(iso + 'T00:00:00');
+          const dayLbl = idx === 0 ? 'Today' : dayNames[dt.getDay()];
+          const tMax = typeof maxTemps[idx] === 'number' ? Math.round(maxTemps[idx]) : '--';
+          const rMm = typeof rainSums[idx] === 'number' ? rainSums[idx] : 0;
+          const rProb = typeof rainProbs[idx] === 'number' ? Math.round(rainProbs[idx]) : 0;
+
+          let action = 'Check Soil';
+          let pillCls = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          if (rMm >= 2 || rProb >= 60) {
+            action = 'Rain Expected';
+            pillCls = 'bg-sky-50 text-sky-700 border-sky-200';
+          } else if (typeof tMax === 'number' && tMax >= 29) {
+            action = 'Water Saplings';
+            pillCls = 'bg-amber-50 text-amber-800 border-amber-200';
+          }
+
+          return `
+            <div class="rounded-xl border border-slate-200/80 bg-slate-50/70 p-2.5 flex flex-col justify-between gap-1.5">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                <span>${dayLbl}</span>
+                <span class="text-slate-500 font-semibold">${tMax}°C</span>
+              </div>
+              <div class="text-[11px] text-slate-500">${rMm.toFixed(1)} mm &middot; ${rProb}% rain</div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border text-center ${pillCls}">${action}</span>
+            </div>
+          `;
+        }).join('');
       }
 
       // ==================== IMPACT SIMULATOR + LIVE DEMO QR ====================
@@ -1143,6 +1355,9 @@
             if (!chosen) return;
             state.selectedLocation = chosen;
             state.manualAddressMode = false;
+          state.lastScanGreenness = null;
+          const scanCard = document.getElementById('cv-scan-card');
+          if (scanCard) scanCard.classList.add('hidden');
             renderSelectedLocationUI();
             showToast('Area selected! You can also add a school/landmark name below.');
           });
@@ -1517,6 +1732,7 @@
                   <span class="text-slate-500">Planter:</span>
                   <span class="font-medium text-slate-800 truncate max-w-[160px]">${escapeHtml(t.planter)}</span>
                 </div>
+                ${typeof t.greennessScore === 'number' ? `<div class="flex items-center justify-between"><span class="text-slate-500">ExG Canopy Scan:</span><span class="font-bold text-emerald-700">${t.greennessScore}% Greenness</span></div>` : ''}
               </div>
 
               ${t.notes ? `<p class="text-xs text-slate-600 leading-relaxed">${escapeHtml(t.notes)}</p>` : ''}
@@ -1785,6 +2001,10 @@
       }
 
       function deleteTree(id) {
+        if (state.cloudConnected && !state.isAdmin) {
+          showToast('Admin Sign-In required to delete cloud records (protects live demo data).', 'amber');
+          return;
+        }
         openConfirm(
           'Delete Saved Tree Record',
           `Remove ${id} permanently from the cloud database?`,
@@ -1849,7 +2069,27 @@
         document.getElementById('btn-saved-add-new').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-onboarding-log').addEventListener('click', () => openModal('modal-add-tree'));
         document.getElementById('btn-open-add-modal').addEventListener('click', () => openModal('modal-add-tree'));
+        document.getElementById('btn-auth-toggle').addEventListener('click', handleAuthToggle);
         document.getElementById('btn-open-live-qr').addEventListener('click', openLiveDemoQrModal);
+        document.getElementById('tree-photo').addEventListener('change', async (e) => {
+          const f = e.target.files && e.target.files[0];
+          const card = document.getElementById('cv-scan-card');
+          if (!f) {
+            state.lastScanGreenness = null;
+            if (card) card.classList.add('hidden');
+            return;
+          }
+          const result = await analyzeLeafImageFile(f);
+          if (result && card) {
+            state.lastScanGreenness = result.score;
+            document.getElementById('cv-scan-preview').src = result.previewUrl;
+            document.getElementById('cv-scan-score').textContent = `${result.score}% Greenness`;
+            document.getElementById('cv-scan-verdict').textContent = result.verdict;
+            document.getElementById('tree-status').value = result.suggestedStatus;
+            card.classList.remove('hidden');
+            showToast(`Leaf scan complete: ${result.score}% canopy greenness!`);
+          }
+        });
         document.getElementById('btn-copy-live-url').addEventListener('click', copyPortalUrl);
         document.getElementById('sim-tree-slider').addEventListener('input', updateImpactSimulator);
 
@@ -1985,6 +2225,7 @@
             lastWatered: todayISO(),
             notes,
             photo: photoData,
+            greennessScore: state.lastScanGreenness,
             auditLog: [{ time: nowStamp(), action: `Registered as ${status} by ${planter}` }],
             createdAt: Date.now()
           };
@@ -2014,8 +2255,12 @@
         document.getElementById('filter-status').addEventListener('change', renderRegistry);
         document.getElementById('filter-stage').addEventListener('change', renderRegistry);
 
-        // Clear all records
+        // Clear all records (Admin-protected when cloud live)
         document.getElementById('btn-clear-data').addEventListener('click', () => {
+          if (state.cloudConnected && !state.isAdmin) {
+            showToast('Admin Sign-In required to clear all cloud records.', 'amber');
+            return;
+          }
           openConfirm(
             'Clear All Records',
             'This will permanently remove all saved trees from Firebase Cloud and this browser.',
