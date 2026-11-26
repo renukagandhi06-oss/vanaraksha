@@ -475,8 +475,12 @@
           </div>
           <p class="text-xs text-slate-500 mt-0.5">Every registered tree and its full audit history stays permanently stored in Firebase Cloud Firestore.</p>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
           <span id="saved-total-badge" class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl">0 Saved</span>
+          <button type="button" id="btn-export-csv" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition inline-flex items-center gap-1.5">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Export Audit CSV</span>
+          </button>
           <button type="button" id="btn-saved-add-new" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition inline-flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>Add New</span>
@@ -491,8 +495,8 @@
     <section id="view-leaderboard" class="tab-panel space-y-4">
       <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Live Volunteer &amp; Planter Leaderboard</h2>
-          <p class="text-xs text-slate-500">Automatically ranked from real cloud-synced tree logs by total plantations, healthy survival rate, and CO<sub>2</sub> offset.</p>
+          <h2 class="text-lg font-bold text-slate-900">Live Volunteer &amp; Verified Care Leaderboard</h2>
+          <p class="text-xs text-slate-500">Ranked by Verified Impact Score: <strong>+10 pts</strong> per tree planted &middot; <strong>+5 pts</strong> per GPS + photo verified watering &middot; <strong>+2 pts</strong> per healthy tree.</p>
         </div>
         <span id="leaderboard-volunteers-badge" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full self-start sm:self-auto">0 Volunteers</span>
       </div>
@@ -2323,22 +2327,93 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
       }
 
+      // ==================== CSV AUDIT EXPORT ====================
+      function exportTreesToCsv() {
+        if (!state.trees || state.trees.length === 0) {
+          showToast('No saved records to export yet.', 'amber');
+          return;
+        }
+        const csvCell = (val) => {
+          const s = val === null || val === undefined ? '' : String(val);
+          return `"${s.replace(/"/g, '""')}"`;
+        };
+        const headers = [
+          'Tree ID', 'Species', 'Botanical Name', 'Stage', 'Health Status',
+          'Full Address', 'City', 'Latitude', 'Longitude', 'Planter',
+          'Planted Date', 'Last Watered', 'Last Watered By', 'Verified Waterings',
+          'Est CO2 (kg/yr)', 'Est O2 (kg/yr)', 'ExG Greenness (%)', 'Notes'
+        ];
+        const rows = state.trees.map((t) => [
+          t.id,
+          t.species,
+          t.botanical || '',
+          t.stage,
+          t.status,
+          t.fullAddress || '',
+          t.city || '',
+          typeof t.lat === 'number' ? t.lat.toFixed(6) : '',
+          typeof t.lng === 'number' ? t.lng.toFixed(6) : '',
+          t.planter || '',
+          t.plantedDate || '',
+          t.lastWatered || '',
+          t.lastWateredBy || '',
+          typeof t.waterCount === 'number' ? t.waterCount : 0,
+          CO2_BY_STAGE[t.stage] || 4,
+          O2_BY_STAGE[t.stage] || 20,
+          typeof t.greennessScore === 'number' ? t.greennessScore : '',
+          t.notes || ''
+        ].map(csvCell).join(','));
+
+        const csvContent = '\uFEFF' + [headers.map(csvCell).join(','), ...rows].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `VanaRaksha_Audit_Report_${todayISO()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast(`Exported ${state.trees.length} cloud record${state.trees.length === 1 ? '' : 's'} to Excel-ready CSV!`);
+      }
+
       // ==================== RENDERING: VOLUNTEER LEADERBOARD ====================
       function renderLeaderboard() {
         const map = {};
-        state.trees.forEach((t) => {
-          const name = (t.planter || 'Volunteer').trim();
+        const ensureVolunteer = (rawName) => {
+          const name = (rawName || 'Volunteer').trim() || 'Volunteer';
           const key = name.toLowerCase();
           if (!map[key]) {
-            map[key] = { name, count: 0, healthy: 0, co2: 0, o2: 0 };
+            map[key] = { name, count: 0, healthy: 0, verifiedWaterings: 0, co2: 0, o2: 0, score: 0 };
           }
-          map[key].count++;
-          if (t.status === 'Healthy') map[key].healthy++;
-          map[key].co2 += CO2_BY_STAGE[t.stage] || 4;
-          map[key].o2 += O2_BY_STAGE[t.stage] || 20;
+          return map[key];
+        };
+
+        state.trees.forEach((t) => {
+          const planterRec = ensureVolunteer(t.planter);
+          planterRec.count++;
+          if (t.status === 'Healthy') planterRec.healthy++;
+          planterRec.co2 += CO2_BY_STAGE[t.stage] || 4;
+          planterRec.o2 += O2_BY_STAGE[t.stage] || 20;
+
+          // Credit every verified watering logged in auditLog to the actual caretaker
+          if (Array.isArray(t.auditLog)) {
+            t.auditLog.forEach((entry) => {
+              const act = (entry && entry.action) || '';
+              const m = act.match(/^Verified watering by (.+?) \(/);
+              if (m && m[1]) {
+                const carerRec = ensureVolunteer(m[1]);
+                carerRec.verifiedWaterings++;
+              }
+            });
+          }
         });
 
-        const ranked = Object.values(map).sort((a, b) => b.count - a.count || b.co2 - a.co2);
+        Object.values(map).forEach((v) => {
+          v.score = (v.count * 10) + (v.verifiedWaterings * 5) + (v.healthy * 2);
+        });
+
+        const ranked = Object.values(map).sort((a, b) => b.score - a.score || b.verifiedWaterings - a.verifiedWaterings || b.count - a.count);
         document.getElementById('leaderboard-volunteers-badge').textContent = `${ranked.length} Volunteer${ranked.length === 1 ? '' : 's'}`;
 
         const container = document.getElementById('leaderboard-container');
@@ -2346,7 +2421,7 @@
           container.innerHTML = `
             <div class="bg-white rounded-2xl p-10 text-center border border-slate-200/80 space-y-3">
               <p class="text-base font-bold text-slate-800">No volunteers ranked yet</p>
-              <p class="text-xs text-slate-500 max-w-md mx-auto">As soon as volunteers log trees under their names, live rankings by trees planted, survival rate, and CO<sub>2</sub> offset will appear here.</p>
+              <p class="text-xs text-slate-500 max-w-md mx-auto">As soon as volunteers plant trees or log GPS-verified waterings, live Impact Scores and rankings will appear here.</p>
               <button type="button" data-action="open-add" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">Log First Tree</button>
             </div>
           `;
@@ -2355,8 +2430,11 @@
 
         const medals = ['bg-amber-100 text-amber-800 border-amber-300', 'bg-slate-200 text-slate-700 border-slate-300', 'bg-orange-100 text-orange-800 border-orange-300'];
         container.innerHTML = ranked.map((v, i) => {
-          const survival = v.count > 0 ? Math.round((v.healthy / v.count) * 100) : 0;
+          const survival = v.count > 0 ? Math.round((v.healthy / v.count) * 100) : 100;
           const badgeCls = medals[i] || 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          const subtitle = v.count > 0
+            ? `${survival}% healthy survival across ${v.count} planted &middot; ${v.verifiedWaterings} verified watering${v.verifiedWaterings === 1 ? '' : 's'}`
+            : `Field Caretaker &middot; ${v.verifiedWaterings} verified watering${v.verifiedWaterings === 1 ? '' : 's'}`;
           return `
             <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div class="flex items-center gap-3.5 min-w-0">
@@ -2365,13 +2443,14 @@
                 </div>
                 <div class="min-w-0">
                   <h3 class="text-base font-bold text-slate-900 truncate">${escapeHtml(v.name)}</h3>
-                  <p class="text-xs text-slate-500">${survival}% healthy survival rate across ${v.count} tree${v.count === 1 ? '' : 's'}</p>
+                  <p class="text-xs text-slate-500">${subtitle}</p>
                 </div>
               </div>
-              <div class="flex items-center gap-2 sm:gap-3 text-xs font-semibold shrink-0">
-                <span class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">${v.count} Tree${v.count === 1 ? '' : 's'}</span>
+              <div class="flex flex-wrap items-center gap-2 text-xs font-semibold shrink-0">
+                <span class="px-3 py-1.5 rounded-xl bg-slate-900 text-emerald-300 font-extrabold">${v.score} pts</span>
+                <span class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">${v.count} Planted</span>
+                <span class="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-800 border border-sky-200">${v.verifiedWaterings} Watered</span>
                 <span class="px-3 py-1.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-200">${v.co2} kg CO<sub>2</sub>/yr</span>
-                <span class="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-800 border border-sky-200">${v.o2} kg O<sub>2</sub>/yr</span>
               </div>
             </div>
           `;
@@ -3099,6 +3178,9 @@
             }
           );
         });
+
+        // 1-Click NGO Audit CSV Export
+        document.getElementById('btn-export-csv').addEventListener('click', exportTreesToCsv);
 
         // Verified Watering Modal controls
         document.getElementById('btn-water-check-gps').addEventListener('click', checkWaterVerifyGps);
