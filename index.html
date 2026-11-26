@@ -8,6 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase Compat SDK (100% Free Spark Plan Firestore Sync) -->
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-compat.js"></script>
@@ -30,6 +32,8 @@
     .modal-backdrop.open {
       display: flex;
     }
+    .leaflet-pane { z-index: 10 !important; }
+    .leaflet-top, .leaflet-bottom { z-index: 20 !important; }
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -138,6 +142,9 @@
 
       <!-- Primary CTA -->
       <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button type="button" id="btn-header-ai-scanner" class="inline-flex items-center justify-center bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 p-2 rounded-xl shadow-sm transition" title="Standalone AI Plant Scanner (Guest &amp; Volunteer)" aria-label="AI Plant Scanner">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </button>
         <button type="button" id="btn-open-species-guide" class="inline-flex items-center justify-center bg-white hover:bg-emerald-50 border border-slate-200 text-emerald-700 p-2 rounded-xl shadow-sm transition" title="Native Bengaluru Species Care Guide" aria-label="Native Species Care Guide">
           <i data-lucide="book-open" class="w-4 h-4"></i>
         </button>
@@ -178,6 +185,10 @@
           </p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0">
+          <button type="button" id="btn-hero-ai-scan" class="px-4 py-2 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-300/40 text-white text-sm font-semibold transition inline-flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-200"></i>
+            <span>AI Plant Scanner</span>
+          </button>
           <button type="button" id="btn-hero-log" class="px-4 py-2 rounded-xl bg-white text-emerald-900 hover:bg-emerald-50 text-sm font-semibold transition inline-flex items-center gap-1.5 shadow-sm">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             <span>Register Tree</span>
@@ -359,6 +370,35 @@
             <p class="text-[11px] text-slate-500">Once canopy reaches maturity</p>
           </div>
         </div>
+      </div>
+
+      <!-- Interactive Live GPS Plantation Map -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-bold text-slate-900">Live GPS Plantation Map</h3>
+              <span id="map-pin-count" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">0 Trees Mapped</span>
+            </div>
+            <p class="text-xs text-slate-500">Color-coded live GPS pins — tap any tree marker to inspect its health, watering proof, and QR Passport.</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" id="btn-map-style-toggle" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition inline-flex items-center gap-1">
+              <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+              <span id="map-style-label">Satellite View</span>
+            </button>
+            <button type="button" id="btn-map-fit" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition">
+              Fit All Trees
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-600">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Healthy</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>Overwatering Shield Active</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Needs Water</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>At Risk</span>
+        </div>
+        <div id="live-tree-map" class="w-full rounded-xl border border-slate-200 overflow-hidden bg-slate-100" style="height: 360px;"></div>
       </div>
 
       <!-- Species & Location Health Charts -->
@@ -664,7 +704,7 @@
                 <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i>
                 <span>AI Identify Species</span>
               </button>
-              <span id="ai-id-status" class="text-[10px] text-slate-500">Powered by Pl@ntNet AI (Sign-in required)</span>
+              <span id="ai-id-status" class="text-[10px] text-slate-500">Powered by Pl@ntNet AI (2 free guest scans/day &middot; 5/day signed in)</span>
             </div>
             <div id="ai-id-results" class="hidden space-y-1.5"></div>
           </div>
@@ -885,6 +925,49 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: STANDALONE AI PLANT SCANNER ==================== -->
+  <div id="modal-ai-scanner" class="modal-backdrop fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200">
+      <div class="sticky top-0 bg-emerald-700 text-white px-5 py-4 flex items-center justify-between z-10">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-emerald-200">Pl@ntNet AI v2 &middot; 87,000+ Species</p>
+          <h3 class="text-base font-extrabold tracking-tight">Quick AI Plant &amp; Tree Scanner</h3>
+        </div>
+        <button type="button" data-close-modal="modal-ai-scanner" class="p-1.5 rounded-lg text-emerald-100 hover:bg-white/10">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="flex items-center justify-between gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs">
+          <span class="font-semibold text-emerald-900">Daily Fair-Use Quota</span>
+          <span id="standalone-ai-quota-pill" class="font-bold px-2 py-0.5 rounded-full bg-white text-emerald-800 border border-emerald-200">Guest: 2/2 left</span>
+        </div>
+
+        <div class="space-y-2">
+          <label for="standalone-ai-photo" class="block text-xs font-semibold text-slate-700">Snap or Upload a Leaf / Plant Photo</label>
+          <input id="standalone-ai-photo" type="file" accept="image/*" class="w-full text-xs text-slate-600 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer" />
+        </div>
+
+        <div id="standalone-ai-preview-wrap" class="hidden rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-3">
+          <img id="standalone-ai-preview" alt="Selected plant preview" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0" />
+          <div class="min-w-0 flex-1 space-y-0.5">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Instant ExG Leaf Health</div>
+            <div id="standalone-ai-exg-score" class="text-xs font-extrabold text-slate-900">--% Greenness</div>
+            <p id="standalone-ai-exg-verdict" class="text-[11px] text-slate-600 leading-snug"></p>
+          </div>
+        </div>
+
+        <button type="button" id="btn-run-standalone-ai" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold transition inline-flex items-center justify-center gap-1.5">
+          <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i>
+          <span>Identify Species with Pl@ntNet AI</span>
+        </button>
+
+        <p id="standalone-ai-status" class="text-[11px] text-slate-500 text-center">Guests get 2 free scans/day; sign in with Google for 5 scans/day.</p>
+        <div id="standalone-ai-results" class="hidden space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -911,6 +994,9 @@
       const O2_BY_STAGE = { 'Sapling': 20, 'Young': 60, 'Mature': 118 };
       const WATER_COOLDOWN_HOURS = { 'Sapling': 24, 'Young': 48, 'Mature': 72 };
       const WATER_GEOFENCE_METERS = 30;
+      const AI_QUOTA_KEY = 'vanaraksha_ai_quota_v1';
+      const AI_LIMIT_GUEST = 2;
+      const AI_LIMIT_USER = 5;
 
       // ==================== STATE ====================
       let state = {
@@ -942,6 +1028,10 @@
       let speciesChart = null;
       let zoneChart = null;
       let forecastChart = null;
+      let liveMap = null;
+      let mapTileLayer = null;
+      let mapMarkersLayer = null;
+      let mapSatelliteMode = false;
       let searchDebounceTimer = null;
       let deepLinkHandled = false;
       let lastWeatherCoordKey = '';
@@ -1100,6 +1190,7 @@
           btn.className = 'inline-flex items-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl shadow-sm transition';
           btn.title = 'Sign in with Google for Volunteer/Admin Verification';
         }
+        updateAiQuotaUI();
       }
 
       async function handleAuthToggle() {
@@ -1846,6 +1937,175 @@
         });
       }
 
+      function getAiQuotaStatus() {
+        if (state.isAdmin) {
+          return { allowed: true, used: 0, limit: Infinity, remaining: Infinity, tier: 'Admin' };
+        }
+        const tier = state.currentUser ? 'Volunteer' : 'Guest';
+        const limit = state.currentUser ? AI_LIMIT_USER : AI_LIMIT_GUEST;
+        const today = todayISO();
+        let used = 0;
+        try {
+          const raw = JSON.parse(localStorage.getItem(AI_QUOTA_KEY) || '{}');
+          if (raw && raw.date === today) {
+            used = state.currentUser ? (Number(raw.userCount) || 0) : (Number(raw.guestCount) || 0);
+          }
+        } catch (e) {}
+        const remaining = Math.max(0, limit - used);
+        return { allowed: remaining > 0, used, limit, remaining, tier };
+      }
+
+      function recordAiScanUsage() {
+        if (state.isAdmin) return;
+        const today = todayISO();
+        let rec = { date: today, guestCount: 0, userCount: 0 };
+        try {
+          const raw = JSON.parse(localStorage.getItem(AI_QUOTA_KEY) || '{}');
+          if (raw && raw.date === today) rec = raw;
+        } catch (e) {}
+        if (state.currentUser) rec.userCount = (Number(rec.userCount) || 0) + 1;
+        else rec.guestCount = (Number(rec.guestCount) || 0) + 1;
+        try { localStorage.setItem(AI_QUOTA_KEY, JSON.stringify(rec)); } catch (e) {}
+        updateAiQuotaUI();
+      }
+
+      function updateAiQuotaUI() {
+        const q = getAiQuotaStatus();
+        const pill = document.getElementById('standalone-ai-quota-pill');
+        if (pill) {
+          pill.textContent = q.tier === 'Admin'
+            ? 'Admin: Unlimited'
+            : `${q.tier}: ${q.remaining}/${q.limit} left today`;
+        }
+        const formStatus = document.getElementById('ai-id-status');
+        if (formStatus && !formStatus.textContent.includes('Top matches')) {
+          formStatus.textContent = q.tier === 'Admin'
+            ? 'Pl@ntNet AI Ready (Admin Unlimited)'
+            : `Pl@ntNet AI (${q.tier}: ${q.remaining}/${q.limit} scans left today)`;
+        }
+      }
+
+      function openStandaloneAiScanner() {
+        updateAiQuotaUI();
+        openModal('modal-ai-scanner');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+
+      async function runStandaloneAiScan() {
+        const photoInput = document.getElementById('standalone-ai-photo');
+        const file = photoInput && photoInput.files && photoInput.files[0] ? photoInput.files[0] : null;
+        const btn = document.getElementById('btn-run-standalone-ai');
+        const statusEl = document.getElementById('standalone-ai-status');
+        const resultsEl = document.getElementById('standalone-ai-results');
+
+        if (!file) {
+          showToast('Please snap or select a leaf/plant photo first.', 'amber');
+          return;
+        }
+
+        const quota = getAiQuotaStatus();
+        if (!quota.allowed) {
+          const msg = quota.tier === 'Guest'
+            ? 'Guest limit reached (2/2 today). Sign in with Google for 5 scans/day!'
+            : 'Daily volunteer limit reached (5/5 today). Resets tomorrow!';
+          statusEl.textContent = msg;
+          showToast(msg, 'amber');
+          return;
+        }
+
+        btn.disabled = true;
+        statusEl.textContent = 'Identifying species via Pl@ntNet AI...';
+        resultsEl.classList.add('hidden');
+        resultsEl.innerHTML = '';
+
+        try {
+          const blob = await prepareImageBlobForPlantNet(file);
+          if (!blob) throw new Error('Image read failed');
+          const fd = new FormData();
+          fd.append('images', blob, 'plant.jpg');
+
+          const headers = {};
+          if (state.currentUser && state.currentUser.uid) {
+            headers['X-VR-User'] = state.currentUser.uid;
+          }
+          const res = await fetch(PLANTNET_WORKER_URL, { method: 'POST', body: fd, headers });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || data.message || `API status ${res.status}`);
+
+          recordAiScanUsage();
+          const matches = Array.isArray(data.results) ? data.results.slice(0, 3) : [];
+          if (matches.length === 0) {
+            statusEl.textContent = 'No plant species recognized — try a closer photo of leaves or flowers.';
+            return;
+          }
+          statusEl.textContent = 'Top Pl@ntNet AI matches — log directly or inspect botanical care:';
+          resultsEl.innerHTML = matches.map((m, idx) => {
+            const pct = Math.round((m.score || 0) * 100);
+            const sci = (m.species && m.species.scientificNameWithoutAuthor) || 'Unknown';
+            const commons = (m.species && Array.isArray(m.species.commonNames) && m.species.commonNames.length > 0)
+              ? m.species.commonNames[0]
+              : sci;
+            const fam = (m.species && m.species.family && m.species.family.scientificNameWithoutAuthor) || '';
+            return `
+              <div class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 space-y-2">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-sm font-bold text-slate-900 truncate">${escapeHtml(commons)}</div>
+                    <div class="text-xs italic text-emerald-700 truncate">${escapeHtml(sci)}${fam ? ` &middot; ${escapeHtml(fam)}` : ''}</div>
+                  </div>
+                  <span class="shrink-0 text-xs font-extrabold px-2 py-0.5 rounded-full ${pct >= 50 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${pct}%</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" data-standalone-log="${idx}" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">Log This Tree</button>
+                  <button type="button" data-standalone-care="${idx}" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition">Care &amp; GBIF Info</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+          resultsEl.classList.remove('hidden');
+
+          resultsEl.querySelectorAll('[data-standalone-log]').forEach((b) => {
+            b.addEventListener('click', () => {
+              const chosen = matches[Number(b.dataset.standaloneLog)];
+              if (!chosen || !chosen.species) return;
+              const sci = chosen.species.scientificNameWithoutAuthor || '';
+              const common = (Array.isArray(chosen.species.commonNames) && chosen.species.commonNames[0]) || sci;
+              const sel = document.getElementById('tree-species');
+              const wrap = document.getElementById('custom-species-wrap');
+              const customCommon = document.getElementById('tree-custom-species');
+              const customBot = document.getElementById('tree-custom-botanical');
+              if (sel && wrap && customCommon && customBot) {
+                sel.value = 'CUSTOM';
+                wrap.classList.remove('hidden');
+                customCommon.required = true;
+                customCommon.value = common;
+                customBot.value = sci;
+              }
+              closeModal('modal-ai-scanner');
+              openModal('modal-add-tree');
+              showToast(`Loaded "${common}" into Log Tree form!`);
+            });
+          });
+
+          resultsEl.querySelectorAll('[data-standalone-care]').forEach((b) => {
+            b.addEventListener('click', () => {
+              const chosen = matches[Number(b.dataset.standaloneCare)];
+              if (!chosen || !chosen.species) return;
+              const sci = chosen.species.scientificNameWithoutAuthor || '';
+              const common = (Array.isArray(chosen.species.commonNames) && chosen.species.commonNames[0]) || sci;
+              closeModal('modal-ai-scanner');
+              openModal('modal-species-guide');
+              lookupBotanicalSpecies(sci || common, common);
+            });
+          });
+        } catch (err) {
+          statusEl.textContent = err && err.message ? err.message : 'AI scan works live on your deployed GitHub Pages portal.';
+          showToast('AI scan requires your live GitHub Pages site.', 'amber');
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
       async function runPlantNetIdentification() {
         const photoInput = document.getElementById('tree-photo');
         const file = photoInput && photoInput.files && photoInput.files[0] ? photoInput.files[0] : null;
@@ -1857,8 +2117,13 @@
           showToast('Please select or snap a plant photo first.', 'amber');
           return;
         }
-        if (state.cloudConnected && !state.currentUser) {
-          showToast('Tap "Sign In" with Google first to use AI Species Identification (protects daily quota).', 'amber');
+        const quota = getAiQuotaStatus();
+        if (!quota.allowed) {
+          const msg = quota.tier === 'Guest'
+            ? 'Guest limit reached (2/2 today). Sign in with Google for 5 scans/day!'
+            : 'Daily volunteer limit reached (5/5 today). Resets tomorrow!';
+          statusEl.textContent = msg;
+          showToast(msg, 'amber');
           return;
         }
 
@@ -1874,12 +2139,17 @@
           const fd = new FormData();
           fd.append('images', blob, 'plant.jpg');
 
-          const res = await fetch(PLANTNET_WORKER_URL, { method: 'POST', body: fd });
+          const headers = {};
+          if (state.currentUser && state.currentUser.uid) {
+            headers['X-VR-User'] = state.currentUser.uid;
+          }
+          const res = await fetch(PLANTNET_WORKER_URL, { method: 'POST', body: fd, headers });
           const data = await res.json();
 
           if (!res.ok) {
             throw new Error(data.error || data.message || `API status ${res.status}`);
           }
+          recordAiScanUsage();
 
           const matches = Array.isArray(data.results) ? data.results.slice(0, 3) : [];
           if (matches.length === 0) {
@@ -1937,6 +2207,79 @@
           showToast('AI scan works on your live GitHub Pages link when signed in.', 'amber');
         } finally {
           btn.disabled = false;
+        }
+      }
+
+      // ==================== INTERACTIVE LIVE GPS TREE MAP ====================
+      function getArcGisTileUrl(satellite) {
+        return satellite
+          ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+      }
+
+      function initOrUpdateLiveMap(fitBounds) {
+        const container = document.getElementById('live-tree-map');
+        const countBadge = document.getElementById('map-pin-count');
+        if (!container || typeof L === 'undefined') return;
+
+        if (!liveMap) {
+          liveMap = L.map(container, { scrollWheelZoom: false }).setView([12.9716, 77.5946], 12);
+          mapTileLayer = L.tileLayer(getArcGisTileUrl(mapSatelliteMode), {
+            attribution: 'Tiles &copy; Esri',
+            maxZoom: 19
+          }).addTo(liveMap);
+          mapMarkersLayer = L.layerGroup().addTo(liveMap);
+        }
+
+        mapMarkersLayer.clearLayers();
+        const geoTrees = state.trees.filter((t) => typeof t.lat === 'number' && typeof t.lng === 'number' && !isNaN(t.lat) && !isNaN(t.lng));
+        if (countBadge) {
+          countBadge.textContent = `${geoTrees.length} Tree${geoTrees.length === 1 ? '' : 's'} Mapped`;
+        }
+
+        const bounds = [];
+        geoTrees.forEach((t) => {
+          const guard = getWateringGuardState(t);
+          let fillColor = '#10b981';
+          if (guard.reason === 'cooldown') fillColor = '#0284c7';
+          else if (t.status === 'At Risk') fillColor = '#e11d48';
+          else if (t.status === 'Needs Water') fillColor = '#f59e0b';
+
+          const marker = L.circleMarker([t.lat, t.lng], {
+            radius: 9,
+            fillColor,
+            color: '#ffffff',
+            weight: 2.5,
+            opacity: 1,
+            fillOpacity: 0.92
+          });
+
+          const shieldText = guard.reason === 'cooldown'
+            ? `<div style="color:#0369a1;font-weight:700;font-size:11px;margin-top:3px;">Overwatering Shield (${guard.hoursRemaining}h lock)</div>`
+            : '';
+          const proofThumb = t.lastWaterProofPhoto
+            ? `<img src="${t.lastWaterProofPhoto}" alt="Proof" style="width:100%;max-height:86px;object-fit:cover;border-radius:8px;margin-top:6px;border:1px solid #cbd5e1;" />`
+            : '';
+
+          marker.bindPopup(`
+            <div style="min-width:190px;font-family:Inter,sans-serif;">
+              <div style="font-size:10px;font-weight:700;color:#047857;">${escapeHtml(t.id)} &middot; ${escapeHtml(t.stage)}</div>
+              <div style="font-size:13px;font-weight:800;color:#0f172a;">${escapeHtml(t.species)}</div>
+              <div style="font-size:11px;color:#475569;margin-top:2px;">Status: <strong>${escapeHtml(t.status)}</strong> &middot; By ${escapeHtml(t.planter)}</div>
+              ${shieldText}
+              ${proofThumb}
+              <button type="button" data-action="passport" data-id="${escapeHtml(t.id)}" style="margin-top:8px;width:100%;padding:6px 10px;border-radius:8px;background:#059669;color:#ffffff;font-size:11px;font-weight:700;border:none;cursor:pointer;">
+                Open QR Passport
+              </button>
+            </div>
+          `);
+          marker.addTo(mapMarkersLayer);
+          bounds.push([t.lat, t.lng]);
+        });
+
+        if (fitBounds && bounds.length > 0) {
+          if (bounds.length === 1) liveMap.setView(bounds[0], 16);
+          else liveMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
         }
       }
 
@@ -2017,6 +2360,7 @@
         }
 
         renderCharts();
+        initOrUpdateLiveMap(true);
       }
 
       function renderCharts() {
@@ -2463,6 +2807,9 @@
         document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
         const target = document.getElementById(`view-${tabName}`);
         if (target) target.classList.add('active');
+        if (tabName === 'dashboard' && liveMap) {
+          setTimeout(() => liveMap.invalidateSize(), 120);
+        }
 
         document.querySelectorAll('.nav-btn').forEach((btn) => {
           const isActive = btn.dataset.nav === tabName;
@@ -3177,6 +3524,47 @@
               showToast('All records cleared.', 'slate');
             }
           );
+        });
+
+        // Standalone AI Plant Scanner controls
+        document.getElementById('btn-header-ai-scanner').addEventListener('click', openStandaloneAiScanner);
+        document.getElementById('btn-hero-ai-scan').addEventListener('click', openStandaloneAiScanner);
+        document.getElementById('btn-run-standalone-ai').addEventListener('click', runStandaloneAiScan);
+
+        document.getElementById('standalone-ai-photo').addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0];
+          const wrap = document.getElementById('standalone-ai-preview-wrap');
+          const preview = document.getElementById('standalone-ai-preview');
+          const scoreEl = document.getElementById('standalone-ai-exg-score');
+          const verdictEl = document.getElementById('standalone-ai-exg-verdict');
+          if (!file) {
+            wrap.classList.add('hidden');
+            return;
+          }
+          const res = await analyzeLeafImageFile(file);
+          if (res) {
+            preview.src = res.previewUrl;
+            scoreEl.textContent = `${res.greenPct}% Greenness`;
+            verdictEl.textContent = res.verdict;
+            wrap.classList.remove('hidden');
+          }
+        });
+
+        // Interactive Live GPS Map controls
+        document.getElementById('btn-map-style-toggle').addEventListener('click', () => {
+          mapSatelliteMode = !mapSatelliteMode;
+          document.getElementById('map-style-label').textContent = mapSatelliteMode ? 'Street Map' : 'Satellite View';
+          if (liveMap && mapTileLayer) {
+            liveMap.removeLayer(mapTileLayer);
+            mapTileLayer = L.tileLayer(getArcGisTileUrl(mapSatelliteMode), {
+              attribution: 'Tiles &copy; Esri',
+              maxZoom: 19
+            }).addTo(liveMap);
+          }
+        });
+
+        document.getElementById('btn-map-fit').addEventListener('click', () => {
+          initOrUpdateLiveMap(true);
         });
 
         // 1-Click NGO Audit CSV Export
