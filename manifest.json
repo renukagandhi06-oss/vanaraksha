@@ -1,0 +1,25 @@
+{
+  "name": "VanaRaksha \u2014 Community Tree & Green Cover Portal",
+  "short_name": "VanaRaksha",
+  "description": "Offline-first community tree plantation, AI species scanner, GPS verification, and green cover monitoring portal.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f7f5",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

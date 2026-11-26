@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VanaRaksha — Community Tree Plantation and Green Cover Monitoring Portal</title>
+  <meta name="theme-color" content="#047857" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VanaRaksha" />
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -142,6 +146,10 @@
 
       <!-- Primary CTA -->
       <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button type="button" id="btn-install-pwa" class="hidden inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-semibold px-2.5 py-2 rounded-xl shadow-sm transition" title="Install VanaRaksha as Offline Mobile App">
+          <i data-lucide="smartphone" class="w-4 h-4"></i>
+          <span class="hidden lg:inline">Install App</span>
+        </button>
         <button type="button" id="btn-header-ai-scanner" class="inline-flex items-center justify-center bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 p-2 rounded-xl shadow-sm transition" title="Standalone AI Plant Scanner (Guest &amp; Volunteer)" aria-label="AI Plant Scanner">
           <i data-lucide="sparkles" class="w-4 h-4"></i>
         </button>
@@ -1035,6 +1043,7 @@
       let searchDebounceTimer = null;
       let deepLinkHandled = false;
       let lastWeatherCoordKey = '';
+      let deferredInstallPrompt = null;
 
       // ==================== CLOUD STATUS UI ====================
       function setCloudStatus(mode, label) {
@@ -1092,6 +1101,11 @@
             firebase.initializeApp(firebaseConfig);
           }
           db = firebase.firestore();
+          if (typeof db.enablePersistence === 'function') {
+            db.enablePersistence({ synchronizeTabs: true }).catch(() => {
+              // Fallback gracefully if private browsing or multiple tabs lock persistence
+            });
+          }
           if (typeof firebase.auth === 'function') {
             auth = firebase.auth();
             auth.onAuthStateChanged((user) => {
@@ -1113,7 +1127,8 @@
                 cloudTrees.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 state.trees = cloudTrees;
                 saveLocalCache();
-                setCloudStatus('live', 'Cloud Live');
+                const isOfflineCache = !navigator.onLine;
+                setCloudStatus(isOfflineCache ? 'offline' : 'live', isOfflineCache ? 'Offline (Queued)' : 'Cloud Live');
                 renderAll();
                 refreshWeatherForLatestTree();
                 checkQrDeepLink();
@@ -3630,6 +3645,51 @@
       bindEvents();
       renderAll();
       updateImpactSimulator();
+      // Offline-First PWA Setup (activates automatically over HTTPS on GitHub Pages)
+      function initPwaOfflineSupport() {
+        const installBtn = document.getElementById('btn-install-pwa');
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredInstallPrompt = e;
+          if (installBtn) installBtn.classList.remove('hidden');
+        });
+        if (installBtn) {
+          installBtn.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            try { await deferredInstallPrompt.userChoice; } catch (e) {}
+            deferredInstallPrompt = null;
+            installBtn.classList.add('hidden');
+          });
+        }
+        window.addEventListener('appinstalled', () => {
+          if (installBtn) installBtn.classList.add('hidden');
+          showToast('VanaRaksha installed! You can now open it offline from your home screen.');
+        });
+
+        window.addEventListener('offline', () => {
+          setCloudStatus('offline', 'Offline (Queued)');
+          showToast('Offline Mode active — new logs & waterings will auto-sync when signal returns.', 'amber');
+        });
+        window.addEventListener('online', () => {
+          setCloudStatus('live', 'Cloud Live');
+          showToast('Back online — syncing offline records with Firebase Cloud!');
+          refreshWeatherForLatestTree();
+        });
+
+        if (window.location.protocol === 'https:') {
+          const manifestLink = document.createElement('link');
+          manifestLink.rel = 'manifest';
+          manifestLink.href = './manifest.json';
+          document.head.appendChild(manifestLink);
+
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+          }
+        }
+      }
+
+      initPwaOfflineSupport();
       initFirebaseSync();
       refreshWeatherForLatestTree();
       checkQrDeepLink();
